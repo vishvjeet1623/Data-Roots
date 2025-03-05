@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Roots - Decentralized Data Exchange</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <script src="script.js" defer></script>
+</head>
+<body>
+    <div id="app">
+        <div id="notification" class="notification"></div>
+        <header>
+            <div class="header-content">
+                <div class="header-left">
+                    <h1>Data Roots</h1>
+                    <nav>
+                        <button class="tab-btn active" data-tab="vault">Data Vault</button>
+                        <button class="tab-btn" data-tab="marketplace">Marketplace</button>
+                        <button class="tab-btn" data-tab="requests">Requests</button>
+                        <button class="tab-btn" data-tab="settings">Settings</button>
+                    </nav>
+                </div>
+                <div class="header-right">
+                    <button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme">🌙</button>
+                    <div class="wallet-info">
+                        <span id="wallet-address">Not Connected</span>
+                        <div class="wallet-buttons">
+                            <button id="connect-wallet" class="primary-button">Connect Wallet</button>
+                            <button id="disconnect-wallet" class="secondary-button" style="display: none;">Disconnect</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <!-- Vault Tab -->
+            <div id="vault" class="tab-content active">
+                <div id="vault-auth" class="vault-auth-container">
+                    <div class="auth-form">
+                        <h2>Data Vault Access</h2>
+                        <p>Please enter your vault key to access your data</p>
+                        <div class="input-group">
+                            <input type="password" id="vault-key" placeholder="Enter vault key" class="form-input">
+                            <button id="unlock-vault" class="primary-button">Unlock Vault</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="vault-content" class="vault-content" style="display: none;">
+                    <div class="section-grid">
+                        <div class="card">
+                            <h3>Social Profiles</h3>
+                            <form id="social-profile-form">
+                                <input type="text" placeholder="Platform (e.g., Twitter)" required>
+                                <input type="text" placeholder="Profile ID" required>
+                                <button type="submit">Add Profile</button>
+                            </form>
+                            <div id="social-profiles-list" class="data-list"></div>
+                        </div>
+
+                        <div class="card">
+                            <h3>Browser Data</h3>
+                            <form id="browser-data-form">
+                                <select required>
+                                    <option value="">Select Browser</option>
+                                    <option value="chrome">Chrome</option>
+                                    <option value="firefox">Firefox</option>
+                                    <option value="safari">Safari</option>
+                                </select>
+                                <button type="submit">Update Browser Data</button>
+                            </form>
+                            <div id="browser-data-list" class="data-list"></div>
+                        </div>
+
+                        <div class="card">
+                            <h3>Personal IDs</h3>
+                            <form id="personal-id-form">
+                                <input type="text" placeholder="ID Type" required>
+                                <input type="text" placeholder="ID Value" required>
+                                <button type="submit">Add ID</button>
+                            </form>
+                            <div id="personal-ids-list" class="data-list"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Marketplace Tab -->
+            <div id="marketplace" class="tab-content">
+                <div class="section-grid">
+                    <div class="card">
+                        <h3>Available Data</h3>
+                        <div id="available-data-list" class="data-list"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Requests Tab -->
+            <div id="requests" class="tab-content">
+                <div class="section-grid">
+                    <div class="card">
+                        <h3>Create Request</h3>
+                        <form id="request-form">
+                            <input type="text" placeholder="Target Address" required>
+                            <select required>
+                                <option value="">Select Data Type</option>
+                                <option value="browser">Browser History</option>
+                                <option value="social">Social Profile</option>
+                                <option value="personal">Personal ID</option>
+                            </select>
+                            <input type="number" placeholder="Price (ETH)" step="0.001" min="0" required>
+                            <button type="submit">Create Request</button>
+                        </form>
+                    </div>
+                    <div class="card">
+                        <h3>Incoming Requests</h3>
+                        <div id="incoming-requests-list" class="data-list"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div id="settings" class="tab-content">
+                <div class="section-grid">
+                    <div class="card">
+                        <h3>Data Management</h3>
+                        <div class="settings-actions">
+                            <button id="export-data" class="secondary-button">Export Data</button>
+                            <button id="delete-data" class="danger-button">Delete All Data</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
