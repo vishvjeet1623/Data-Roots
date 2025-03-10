@@ -2,7 +2,7 @@
 
 
 Contract Address - (Data Roots)
-0x30C5513dbAa548d840DF6c888f7756dc63d7e5AE
+0x245453c95F6E3741140486e3670E6a81EaB5a503
 
 The core idea is to shift control of personal data back to the user. Instead of corporations collecting and profiting from our data, individuals can choose what data they share, with whom, and for what compensation.
 
