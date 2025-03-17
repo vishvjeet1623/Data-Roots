@@ -20,10 +20,12 @@ DataRoots is a blockchain-based platform that enables secure, decentralized shar
 - **Storage**: IPFS via Pinata
 - **Web3 Integration**: ethers.js
 
-## Getting Started
 
 ### Prerequisites
 
 - MetaMask or another Ethereum wallet
-- Access to an EDU Chain testnet network 
+- Access to an EDU Chain testnet network
+
+## Contract Address
+0x517b61b41D4B19D8A5c05a0A5AFEE121ba2e6669
 
