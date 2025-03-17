@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataRoots - Decentralized Data Sharing</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>DataRoots</h1>
+            <p>Decentralized Data Sharing Platform</p>
+            <div id="wallet-info">
+                <button id="connect-wallet">Connect Wallet</button>
+                <div id="account-info" class="hidden">
+                    <p>Connected: <span id="account-address"></span></p>
+                    <p>Balance: <span id="account-balance"></span> ETH</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <section id="notification" class="hidden">
+            <p id="notification-text"></p>
+            <button id="close-notification">×</button>
+        </section>
+
+        <section class="tabs">
+            <button class="tab-btn active" data-tab="upload">Upload Data</button>
+            <button class="tab-btn" data-tab="my-data">My Data</button>
+            <button class="tab-btn" data-tab="browse">Browse Data</button>
+            <button class="tab-btn" data-tab="requests">Access Requests</button>
+        </section>
+
+        <section id="upload" class="tab-content active">
+            <h2>Upload Data</h2>
+            <form id="upload-form">
+                <div class="form-group">
+                    <label for="file-upload">File</label>
+                    <input type="file" id="file-upload" required>
+                    <p class="file-info">Supported formats: PDF, DOC, DOCX, TXT, JSON, CSV</p>
+                </div>
+                <div class="form-group">
+                    <label for="data-category">Category</label>
+                    <select id="data-category">
+                        <option value="0">Personal</option>
+                        <option value="1">Educational</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="ipfs-hash">IPFS Hash (Optional - will be auto-generated)</label>
+                    <input type="text" id="ipfs-hash" readonly>
+                </div>
+                <button type="submit">Upload</button>
+            </form>
+        </section>
+
+        <section id="my-data" class="tab-content">
+            <h2>My Data</h2>
+            <div id="user-data-list" class="data-list">
+                <p class="empty-message">Connect your wallet to view your data</p>
+            </div>
+        </section>
+
+        <section id="browse" class="tab-content">
+            <h2>Browse Available Data</h2>
+            <div id="all-data-list" class="data-list">
+                <p class="empty-message">Connect your wallet to browse data</p>
+            </div>
+        </section>
+
+        <section id="requests" class="tab-content">
+            <h2>Access Requests</h2>
+            <div class="requests-container">
+                <div class="requests-section">
+                    <h3>Incoming Requests</h3>
+                    <div id="incoming-requests" class="request-list">
+                        <p class="empty-message">No incoming requests</p>
+                    </div>
+                </div>
+                <div class="requests-section">
+                    <h3>Outgoing Requests</h3>
+                    <div id="outgoing-requests" class="request-list">
+                        <p class="empty-message">No outgoing requests</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2 id="modal-title">Request Access</h2>
+            <div id="modal-body">
+                <form id="request-access-form">
+                    <input type="hidden" id="data-id">
+                    <div class="form-group">
+                        <label for="access-duration">Access Duration (days)</label>
+                        <input type="number" id="access-duration" min="1" max="365" value="30">
+                    </div>
+                    <p>Price: 0.01 ETH</p>
+                    <button type="submit">Request Access</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2023 DataRoots. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="js/app.js"></script>
+</body>
+</html> 
