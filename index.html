@@ -14,10 +14,14 @@
             <h1>DataRoots</h1>
             <p>Decentralized Data Sharing Platform</p>
             <div id="wallet-info">
-                <button id="connect-wallet">Connect Wallet</button>
+                <div class="wallet-connect-wrapper">
+                    <button id="connect-wallet">Connect Wallet</button>
+                    <div id="connect-loading" class="loading-circle"></div>
+                    <div id="connection-status" class="connection-status">Connecting to wallet...</div>
+                </div>
                 <div id="account-info" class="hidden">
                     <p>Connected: <span id="account-address"></span></p>
-                    <p>Balance: <span id="account-balance"></span> ETH</p>
+                    <p>Balance: <span id="account-balance"></span> EDU</p>
                 </div>
             </div>
         </div>
@@ -27,6 +31,18 @@
         <section id="notification" class="hidden">
             <p id="notification-text"></p>
             <button id="close-notification">×</button>
+        </section>
+
+        <section id="metamask-banner" class="metamask-banner hidden">
+            <div class="banner-content">
+                <img src="https://metamask.io/images/metamask-logo.png" alt="MetaMask" class="metamask-icon">
+                <div class="banner-text">
+                    <h3>MetaMask Required</h3>
+                    <p>To use this application, you need to install the MetaMask browser extension.</p>
+                </div>
+                <a href="https://metamask.io/download/" target="_blank" class="install-btn">Install MetaMask</a>
+            </div>
+            <button class="close-banner" id="close-metamask-banner">×</button>
         </section>
 
         <section class="tabs">
@@ -64,21 +80,21 @@
         </section>
 
         <section id="my-data" class="tab-content">
-            <h2>My Data</h2>
+            <h2>My Data <button id="refresh-my-data" class="refresh-btn" title="Refresh My Data">↻</button></h2>
             <div id="user-data-list" class="data-list">
                 <p class="empty-message">Connect your wallet to view your data</p>
             </div>
         </section>
 
         <section id="browse" class="tab-content">
-            <h2>Browse Available Data</h2>
+            <h2>Browse Available Data <button id="refresh-browse" class="refresh-btn" title="Refresh Data Pot">↻</button></h2>
             <div id="all-data-list" class="data-list">
                 <p class="empty-message">Connect your wallet to browse data</p>
             </div>
         </section>
 
         <section id="requests" class="tab-content">
-            <h2>Access Requests</h2>
+            <h2>Access Requests <button id="refresh-requests" class="refresh-btn" title="Refresh Requests">↻</button></h2>
             <div class="requests-container">
                 <div class="requests-section">
                     <h3>Incoming Requests</h3>
@@ -107,7 +123,7 @@
                         <label for="access-duration">Access Duration (days)</label>
                         <input type="number" id="access-duration" min="1" max="365" value="30">
                     </div>
-                    <p>Price: 0.01 ETH</p>
+                    <p>Price: 0.01 EDU</p>
                     <button type="submit">Request Access</button>
                 </form>
             </div>
@@ -121,5 +137,75 @@
     </footer>
 
     <script src="app.js"></script>
+    
+    <!-- Live Reload Script -->
+    <script>
+        // Enhanced live reload functionality
+        (function() {
+            const FILE_CHECK_INTERVAL = 3000; // Check file changes every 3 seconds
+            const BLOCKCHAIN_CHECK_INTERVAL = 10000; // Check blockchain changes every 10 seconds
+            let lastModified = new Date().getTime();
+            let lastBlockNumber = 0;
+            
+            // Function to check if any files have changed
+            function checkForFileChanges() {
+                fetch('app.js', { method: 'HEAD' })
+                    .then(response => {
+                        const fileDate = response.headers.get('last-modified');
+                        if (fileDate) {
+                            const fileTime = new Date(fileDate).getTime();
+                            if (fileTime > lastModified) {
+                                console.log('Detected file changes, reloading page...');
+                                lastModified = fileTime;
+                                location.reload();
+                            }
+                        }
+                    })
+                    .catch(err => console.error('Error checking for file changes:', err));
+            }
+            
+            // Function to check for blockchain changes
+            async function checkForBlockchainChanges() {
+                try {
+                    // Only check if the app has initialized and wallet is connected
+                    if (typeof window.provider !== 'undefined') {
+                        const currentBlockNumber = await window.provider.getBlockNumber();
+                        
+                        if (lastBlockNumber > 0 && currentBlockNumber > lastBlockNumber) {
+                            console.log(`Detected new block: ${currentBlockNumber} (previous: ${lastBlockNumber})`);
+                            
+                            // Reload content based on active tab
+                            const activeTab = document.querySelector('.tab-btn.active');
+                            if (activeTab) {
+                                const tabId = activeTab.getAttribute('data-tab');
+                                
+                                // Refresh content with true flag to indicate this is an auto-refresh
+                                switch (tabId) {
+                                    case 'my-data':
+                                        if (typeof window.loadUserData === 'function') window.loadUserData(true);
+                                        break;
+                                    case 'browse':
+                                        if (typeof window.loadAllData === 'function') window.loadAllData(true);
+                                        break;
+                                    case 'requests':
+                                        if (typeof window.loadRequests === 'function') window.loadRequests(true);
+                                        break;
+                                }
+                            }
+                        }
+                        
+                        lastBlockNumber = currentBlockNumber;
+                    }
+                } catch (error) {
+                    console.error('Error checking for blockchain changes:', error);
+                }
+            }
+            
+            // Start checking for changes
+            setInterval(checkForFileChanges, FILE_CHECK_INTERVAL);
+            setInterval(checkForBlockchainChanges, BLOCKCHAIN_CHECK_INTERVAL);
+            console.log('Enhanced live reload activated - will refresh content when changes are detected');
+        })();
+    </script>
 </body>
 </html>
