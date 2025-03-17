@@ -7,35 +7,56 @@
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script type="module" src="https://unpkg.com/@splinetool/viewer@1.9.79/build/spline-viewer.js"></script>
 </head>
 <body>
+    <!-- Redirect script -->
+    <script>
+        // Check if this is a page refresh (type 1) or if user didn't come from landing
+        // Use a combination of checks to ensure reliability
+        const isPageRefresh = performance.navigation && performance.navigation.type === 1;
+        const isNavigated = sessionStorage.getItem('fromLanding') === 'true';
+        
+        // If this is a refresh or not navigated from landing page, redirect
+        if (isPageRefresh || !isNavigated) {
+            // Clear the flag
+            sessionStorage.removeItem('fromLanding');
+            // Redirect to landing page
+            window.location.href = 'landing.html';
+        }
+    </script>
+
+    <!-- Spline Background -->
+    <div class="spline-container">
+        <spline-viewer url="https://prod.spline.design/jcBxhhVp-UB6Lujt/scene.splinecode"></spline-viewer>
+    </div>
+
+    <!-- Notification System -->
+    <div id="notification" class="hidden">
+        <p id="notification-text"></p>
+        <button id="close-notification">×</button>
+    </div>
+
     <header>
-        <div class="container">
-            <h1>DataRoots</h1>
-            <p>Decentralized Data Sharing Platform</p>
+        <div class="container header-container">
+            <div class="header-logo-container">
+                <img src="logo.jpg" alt="DataRoots Logo" class="header-logo-image">
+                <h1 id="main-title">DataRoots</h1>
+            </div>
             <div id="wallet-info">
-                <div class="wallet-connect-wrapper">
-                    <button id="connect-wallet">Connect Wallet</button>
-                    <div id="connect-loading" class="loading-circle"></div>
-                    <div id="connection-status" class="connection-status">Connecting to wallet...</div>
+                <div id="account-info">
+                    <p>Connected: <span id="account-address">Connecting...</span></p>
+                    <p>Balance: <span id="account-balance">Loading...</span> EDU</p>
                 </div>
-                <div id="account-info" class="hidden">
-                    <p>Connected: <span id="account-address"></span></p>
-                    <p>Balance: <span id="account-balance"></span> EDU</p>
-                </div>
+                <button id="disconnect-wallet" class="disconnect-btn" title="Disconnect Wallet">Disconnect</button>
             </div>
         </div>
     </header>
 
     <main class="container">
-        <section id="notification" class="hidden">
-            <p id="notification-text"></p>
-            <button id="close-notification">×</button>
-        </section>
-
         <section id="metamask-banner" class="metamask-banner hidden">
             <div class="banner-content">
-                <img src="https://metamask.io/images/metamask-logo.png" alt="MetaMask" class="metamask-icon">
+                <img src="metamask.webp" alt="MetaMask" class="metamask-icon">
                 <div class="banner-text">
                     <h3>MetaMask Required</h3>
                     <p>To use this application, you need to install the MetaMask browser extension.</p>
@@ -48,7 +69,7 @@
         <section class="tabs">
             <button class="tab-btn active" data-tab="upload">Upload Data</button>
             <button class="tab-btn" data-tab="my-data">My Data</button>
-            <button class="tab-btn" data-tab="browse">Data Pot</button>
+            <button class="tab-btn" data-tab="browse">Data Port</button>
             <button class="tab-btn" data-tab="requests">Requests</button>
         </section>
 
@@ -132,7 +153,7 @@
 
     <footer>
         <div class="container">
-            <p>&copy; 2023 DataRoots. All rights reserved.</p>
+            <p>2025@DataRoots</p>
         </div>
     </footer>
 

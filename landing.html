@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Roots - Decentralized Data Sharing</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Spline Viewer Script -->
+    <script type="module" src="https://unpkg.com/@splinetool/viewer@1.9.79/build/spline-viewer.js"></script>
+    <style>
+        /* Landing Page Specific Styles */
+        body, html {
+            height: 100%;
+            margin: 0;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .spline-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .page-content {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .landing-content {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 120px 20px 80px;
+            flex: 1;
+        }
+
+        .hero-section {
+            padding: 40px;
+            margin-top: 40px;
+            margin-bottom: 40vh; /* Creates space for scrolling to the next section */
+            background-color: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--primary-color);
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(10, 189, 198, 0.1);
+            max-width: 900px;
+            transition: box-shadow 0.3s ease;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .hero-section:hover {
+            box-shadow: 0 0 25px rgba(10, 189, 198, 0.2);
+        }
+
+        .logo-image {
+            width: 150px;
+            height: 150px;
+            object-fit: contain;
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 5px;
+            margin-bottom: 20px;
+        }
+
+        .logo-title {
+            margin: 15px 0;
+            color: var(--primary-color);
+            font-size: 3.5rem;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            z-index: 100;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .header-logo {
+            color: var(--primary-color);
+            font-size: 1.8rem;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .wallet-btn {
+            background-color: var(--light-color);
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+            padding: 10px 15px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .wallet-btn:hover {
+            background-color: var(--primary-color);
+            color: #000000;
+        }
+
+        .wallet-btn img {
+            width: 20px;
+            height: 20px;
+        }
+
+        .tagline {
+            color: #ffffff;
+            font-size: 1.5rem;
+            margin-bottom: 40px;
+            max-width: 700px;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .cta-btn {
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            letter-spacing: 0.5px;
+            border-radius: 6px;
+            font-weight: bold;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .cta-btn.primary {
+            background-color: var(--primary-color);
+            color: #000000;
+            border: none;
+        }
+
+        .cta-btn.primary:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-3px);
+        }
+
+        .cta-btn.secondary {
+            background-color: transparent;
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+        }
+
+        .cta-btn.secondary:hover {
+            background-color: rgba(10, 189, 198, 0.1);
+            transform: translateY(-3px);
+        }
+
+        .section-title {
+            color: var(--primary-color);
+            font-size: 2rem;
+            margin-bottom: 30px;
+            margin-top: 60px;
+        }
+
+        .features {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 60px;
+            padding: 30px;
+            background-color: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--primary-color);
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(10, 189, 198, 0.1);
+            transition: box-shadow 0.3s ease;
+        }
+        
+        .features:hover {
+            box-shadow: 0 0 25px rgba(10, 189, 198, 0.2);
+        }
+
+        .feature {
+            background-color: rgba(0, 0, 0, 0.6);
+            border: 1px solid var(--primary-color);
+            border-radius: 8px;
+            padding: 20px;
+            width: 250px;
+            text-align: center;
+            transition: transform 0.3s;
+        }
+
+        .feature:hover {
+            transform: translateY(-5px);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+
+        .feature-title {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+
+        .feature-desc {
+            color: #cccccc;
+            font-size: 0.9rem;
+        }
+
+        .about-section {
+            max-width: 800px;
+            margin: 80px auto;
+            padding: 40px;
+            background-color: rgba(0, 0, 0, 0.6);
+            border: 1px solid var(--primary-color);
+            border-radius: 8px;
+            transition: box-shadow 0.3s ease;
+            box-shadow: 0 0 20px rgba(10, 189, 198, 0.1);
+        }
+        
+        .about-section:hover {
+            box-shadow: 0 0 25px rgba(10, 189, 198, 0.2);
+        }
+
+        .about-text {
+            color: #ffffff;
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+
+        footer {
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 20px 0;
+            border-top: 1px solid var(--primary-color);
+            margin-top: 50px;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .footer-logo {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .footer-link {
+            color: #cccccc;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-link:hover {
+            color: var(--primary-color);
+        }
+
+        .footer-credit {
+            text-align: center;
+            color: #999999;
+            margin-top: 15px;
+            font-size: 0.9rem;
+            padding-bottom: 10px;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s ease-in-out infinite;
+            margin-left: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 768px) {
+            .features {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .logo-title {
+                font-size: 2.5rem;
+            }
+            
+            .logo-image {
+                width: 120px;
+                height: 120px;
+            }
+
+            .tagline {
+                font-size: 1.2rem;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .header {
+                padding: 15px 20px;
+            }
+
+            .footer-content {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .hero-section {
+                margin-bottom: 20vh;
+            }
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--secondary-color);
+        }
+    </style>
+</head>
+<body>
+    <!-- Spline Background -->
+    <div class="spline-container">
+        <spline-viewer url="https://prod.spline.design/jcBxhhVp-UB6Lujt/scene.splinecode"></spline-viewer>
+    </div>
+
+    <!-- Header with wallet connection -->
+    <header class="header">
+        <a href="#" class="header-logo">Data Roots</a>
+        <button id="connect-wallet" class="wallet-btn">
+            <img src="metamask.webp" alt="MetaMask">
+            Connect Wallet
+        </button>
+    </header>
+
+    <div class="page-content">
+        <!-- Landing Content -->
+        <div class="landing-content">
+            <div class="hero-section">
+                <img src="logo.jpg" alt="Data Roots Logo" class="logo-image">
+                <h1 class="logo-title">Data Roots</h1>
+                <p class="tagline">Secure, Decentralized and Empowering Data Exchange</p>
+                
+                <div class="cta-buttons">
+                    <a href="javascript:void(0);" onclick="goToApp()" class="cta-btn primary">Try Now</a>
+                    <a href="#about" class="cta-btn secondary">Learn More</a>
+                </div>
+            </div>
+
+            <h2 class="section-title">Key Features</h2>
+            <div class="features">
+                <div class="feature">
+                    <div class="feature-icon">🔒</div>
+                    <h3 class="feature-title">Secure Storage</h3>
+                    <p class="feature-desc">Your data is encrypted and stored on decentralized networks, ensuring maximum security and privacy.</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🔄</div>
+                    <h3 class="feature-title">Smart Contracts</h3>
+                    <p class="feature-desc">Automated access control through blockchain-based smart contracts with transparent terms.</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">💰</div>
+                    <h3 class="feature-title">Monetize Data</h3>
+                    <p class="feature-desc">Set your terms and create value from your data assets with flexible sharing options.</p>
+                </div>
+            </div>
+
+            <section id="about" class="about-section">
+                <h2 class="section-title">About Data Roots</h2>
+                <p class="about-text">
+                    DataRoots is a revolutionary platform that empowers users to take control of their digital data. Using blockchain technology,
+                    we provide a secure, transparent, and decentralized framework for data storage and sharing.
+                </p>
+                <p class="about-text">
+                    Our goal is to create a fair ecosystem where data creators can maintain ownership of their assets while benefiting from sharing them
+                    with others. Through smart contracts, users can define their own terms for data access, ensuring transparency and fair compensation.
+                </p>
+                <p class="about-text">
+                    Join us in reshaping the future of data ownership and digital privacy in the age of information.
+                </p>
+            </section>
+        </div>
+
+        <footer>
+            <div class="footer-content">
+                <div class="footer-logo">Data Roots</div>
+                <div class="footer-links">
+                    <a href="privacy.html" class="footer-link">Privacy Policy</a>
+                    <a href="terms.html" class="footer-link">Terms of Service</a>
+                    <a href="contact.html" class="footer-link">Contact</a>
+                </div>
+            </div>
+            <div class="footer-credit">Made by OffScripters</div>
+        </footer>
+    </div>
+
+    <script>
+        // MetaMask connection
+        document.getElementById('connect-wallet').addEventListener('click', async function() {
+            const connectBtn = this;
+            const btnText = connectBtn.innerHTML;
+            
+            // Show loading indicator
+            connectBtn.innerHTML = 'Connecting... <span class="loading"></span>';
+            
+            // Check if MetaMask is installed
+            if (typeof window.ethereum !== 'undefined') {
+                try {
+                    // Request account access
+                    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    
+                    if (accounts.length > 0) {
+                        // Connected successfully
+                        connectBtn.innerHTML = 'Connected: ' + accounts[0].substring(0, 6) + '...' + accounts[0].substring(38);
+                        
+                        // Clear any existing flags first
+                        sessionStorage.removeItem('fromLanding');
+                        // Set fresh flag in sessionStorage
+                        sessionStorage.setItem('fromLanding', 'true');
+                        
+                        // Redirect to the app after successful connection
+                        setTimeout(() => {
+                            window.location.href = 'index.html';
+                        }, 1000);
+                    } else {
+                        connectBtn.innerHTML = btnText;
+                    }
+                } catch (error) {
+                    console.error('Error connecting to MetaMask:', error);
+                    connectBtn.innerHTML = 'Connection Failed';
+                    
+                    setTimeout(() => {
+                        connectBtn.innerHTML = btnText;
+                    }, 2000);
+                }
+            } else {
+                // MetaMask not installed
+                connectBtn.innerHTML = 'MetaMask Not Found';
+                
+                setTimeout(() => {
+                    // Redirect to MetaMask download page
+                    window.open('https://metamask.io/download/', '_blank');
+                    connectBtn.innerHTML = btnText;
+                }, 2000);
+            }
+        });
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                
+                const targetId = this.getAttribute('href');
+                if (targetId === "#") return;
+                
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    targetElement.scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+
+        // Function to navigate to the app and set the session flag
+        function goToApp() {
+            // Clear any existing flags first
+            sessionStorage.removeItem('fromLanding');
+            // Set a fresh flag in sessionStorage to indicate we're coming from landing page
+            sessionStorage.setItem('fromLanding', 'true');
+            // Navigate to the app page
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html> 

@@ -822,102 +822,47 @@ const refreshBrowseBtn = document.getElementById('refresh-browse');
 const refreshRequestsBtn = document.getElementById('refresh-requests');
 
 // Initialize the application
-async function init() {
+async function initApp() {
     setupEventListeners();
     
-    // Check if MetaMask is installed and banner wasn't dismissed previously
-    const metamaskBannerDismissed = localStorage.getItem('metamaskBannerDismissed');
-    if (!window.ethereum && metamaskBannerDismissed !== 'true') {
-        // Show MetaMask banner if not installed and not dismissed
+    // Check if MetaMask is installed
+    if (typeof window.ethereum === 'undefined') {
+        if (metamaskBanner) {
         metamaskBanner.classList.remove('hidden');
     }
-    
-    // Create a read-only provider for initial page load
-        try {
-            provider = new ethers.providers.JsonRpcProvider(EDU_CHAIN_RPC_URL);
-        console.log('Created read-only provider for EDU Chain');
-        } catch (error) {
-        console.error('Error setting up initial provider:', error);
+        showNotification('MetaMask not detected. Please install MetaMask to use this application.', 'error');
+        return;
     }
     
-    // Setup auto-refresh for tab content
-    setupAutoRefresh();
+    try {
+        // Check if user has already connected (MetaMask remembers connections)
+        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+        
+        if (accounts && accounts.length > 0) {
+            // Auto-connect since user has already authorized the app
+            await connectWallet();
+        } else {
+            // Redirect to landing page to connect wallet first
+            window.location.href = 'landing.html';
+        }
+    } catch (error) {
+        console.error('Error initializing app:', error);
+        showNotification('Error initializing app: ' + error.message, 'error');
+        }
 }
 
-// Setup auto-refresh for tab content
-function setupAutoRefresh() {
-    // Refresh data every 10 seconds
-    const REFRESH_INTERVAL = 10000;
-    
-    // Set interval for auto-refresh based on active tab
-    setInterval(() => {
-        // Find active tab
-        const activeTab = document.querySelector('.tab-btn.active');
-        if (!activeTab) return;
-        
-        const tabId = activeTab.getAttribute('data-tab');
-        
-        // Only refresh if wallet is connected
-        if (!currentAccount) return;
-        
-        // Check if it's too soon after a manual refresh
-        const now = Date.now();
-        if (lastRefreshTime[tabId] && (now - lastRefreshTime[tabId] < MANUAL_REFRESH_COOLDOWN)) {
-            console.log(`Skipping auto-refresh for ${tabId} - recent manual refresh`);
-            return;
-        }
-        
-        // Refresh based on tab type
-        switch (tabId) {
-            case 'my-data':
-                loadUserData(true); // true = auto refresh
-                break;
-            case 'browse':
-                loadAllData(true); // true = auto refresh
-                break;
-            case 'requests':
-                loadRequests(true); // true = auto refresh
-                break;
-        }
-    }, REFRESH_INTERVAL);
-    
-    console.log('Auto-refresh activated: Tab content will reload every 10 seconds');
-}
+// Initialize app when DOM content is loaded
+document.addEventListener('DOMContentLoaded', initApp);
 
 // Setup event listeners
 function setupEventListeners() {
-    // Connect wallet button - now fully manual
-    connectWalletBtn.addEventListener('click', async () => {
-        try {
-            // Check if MetaMask is installed
-            if (!window.ethereum) {
-                // Show MetaMask banner if not installed
-                metamaskBanner.classList.remove('hidden');
-                return;
-            }
-            
-            // Show loading indicator and status
-            connectLoading.classList.add('visible');
-            connectionStatus.textContent = 'Connecting to wallet...';
-            connectionStatus.classList.add('visible');
-            
-            // Disable button while connecting
-            connectWalletBtn.disabled = true;
-            connectWalletBtn.textContent = 'Connecting...';
-            
-            await connectWallet();
-            
-        } catch (error) {
-            console.error('Error connecting wallet:', error);
-            showNotification('Failed to connect wallet: ' + error.message, 'error');
-        } finally {
-            // Hide loading indicator and reset button
-            connectLoading.classList.remove('visible');
-            connectionStatus.classList.remove('visible');
-            connectWalletBtn.disabled = false;
-            connectWalletBtn.textContent = 'Connect Wallet';
-        }
-    });
+    // Connect wallet button is removed, so the event listener is not needed anymore
+    
+    // Disconnect wallet button
+    const disconnectBtn = document.getElementById('disconnect-wallet');
+    if (disconnectBtn) {
+        disconnectBtn.addEventListener('click', disconnectWallet);
+    }
     
     // Refresh buttons
     if (refreshMyDataBtn) {
@@ -960,15 +905,19 @@ function setupEventListeners() {
     }
     
     // Close MetaMask banner and remember dismissal
+    if (closeMetamaskBanner) {
     closeMetamaskBanner.addEventListener('click', () => {
         metamaskBanner.classList.add('hidden');
         localStorage.setItem('metamaskBannerDismissed', 'true');
     });
+    }
     
     // Close notification
+    if (closeNotificationBtn) {
     closeNotificationBtn.addEventListener('click', () => {
-        notification.classList.add('hidden');
+        hideNotification();
     });
+    }
     
     // Tab navigation
     tabBtns.forEach(btn => {
@@ -996,13 +945,13 @@ function setupEventListeners() {
                 // Load content based on tab
                 switch (tabId) {
                     case 'my-data':
-                        await loadUserData();
+                        await loadUserData(true); // true = auto refresh
                         break;
                     case 'browse':
-                        await loadAllData();
+                        await loadAllData(true); // true = auto refresh
                         break;
                     case 'requests':
-                        await loadRequests();
+                        await loadRequests(true); // true = auto refresh
                         break;
                 }
             }
@@ -1036,26 +985,27 @@ async function connectWallet() {
             throw new Error('MetaMask not detected. Please install MetaMask to use this application.');
         }
         
-        // Request account access - this will prompt the user
-        connectionStatus.textContent = 'Waiting for approval...';
-        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        // Get accounts - should already be authorized from landing page
+        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+        
+        // If no accounts, request access (should not happen if coming from landing page)
+        if (!accounts || accounts.length === 0) {
+            accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
         
         if (!accounts || accounts.length === 0) {
             throw new Error('No accounts found. Please unlock your MetaMask wallet.');
+            }
         }
         
         // Initialize provider and signer
-        connectionStatus.textContent = 'Initializing connection...';
         provider = new ethers.providers.Web3Provider(window.ethereum);
         signer = provider.getSigner();
         currentAccount = await signer.getAddress();
         
         // Check if we're on EDU Chain, if not, try to switch
-        connectionStatus.textContent = 'Checking network...';
         try {
             const chainId = await provider.getNetwork().then(network => network.chainId);
             if (chainId !== EDU_CHAIN_ID) {  // Use the constant for EDU Chain's chainId
-                connectionStatus.textContent = 'Switching to EDU Chain...';
                 try {
                     // Try to switch to EDU Chain
                     await window.ethereum.request({
@@ -1065,7 +1015,6 @@ async function connectWallet() {
                 } catch (switchError) {
                     // This error code indicates that the chain has not been added to MetaMask
                     if (switchError.code === 4902) {
-                        connectionStatus.textContent = 'Adding EDU Chain to wallet...';
                         try {
                             await window.ethereum.request({
                                 method: 'wallet_addEthereumChain',
@@ -1094,7 +1043,6 @@ async function connectWallet() {
                 }
                 
                 // Reinitialize provider after network switch
-                connectionStatus.textContent = 'Finalizing connection...';
                 provider = new ethers.providers.Web3Provider(window.ethereum);
                 signer = provider.getSigner();
             }
@@ -1103,19 +1051,21 @@ async function connectWallet() {
         }
         
         // Initialize contract
-        connectionStatus.textContent = 'Loading smart contract...';
         contract = new ethers.Contract(contractAddress, contractABI, signer);
         
         // Update UI
-        connectionStatus.textContent = 'Connected successfully!';
-        connectWalletBtn.classList.add('hidden');
-        accountInfo.classList.remove('hidden');
-        accountAddress.textContent = truncateString(accounts[0], 12);
-        const balance = await provider.getBalance(accounts[0]);
-        accountBalance.textContent = ethers.utils.formatEther(balance).substring(0, 6); // Display in EDU
+        if (accountAddress) {
+        accountAddress.textContent = `${currentAccount.substring(0, 6)}...${currentAccount.substring(38)}`;
+        }
+        
+        // Get and display balance
+        if (accountBalance) {
+        const balance = await provider.getBalance(currentAccount);
+        // Format balance with EDU symbol already shown in HTML
+        accountBalance.textContent = ethers.utils.formatEther(balance).substring(0, 6);
+        }
         
         // Load data
-        connectionStatus.textContent = 'Loading your data...';
         loadUserData();
         loadAllData();
         loadRequests();
@@ -1125,15 +1075,15 @@ async function connectWallet() {
         
         showNotification('Wallet connected successfully', 'success');
     } catch (error) {
-        // Hide loading and re-enable button in case of error
-        connectLoading.classList.remove('visible');
-        connectionStatus.classList.remove('visible');
-        connectWalletBtn.disabled = false;
-        connectWalletBtn.textContent = 'Connect Wallet';
-        
         console.error('Error connecting wallet:', error);
         showNotification('Failed to connect wallet: ' + error.message, 'error');
-        throw error; // Re-throw for the calling function to handle
+        
+        // If wallet connection fails in the app, redirect back to landing page
+        setTimeout(() => {
+            window.location.href = 'landing.html';
+        }, 3000);
+        
+        throw error;
     }
 }
 
@@ -1149,9 +1099,12 @@ async function handleAccountChange(accounts) {
         contract = new ethers.Contract(contractAddress, contractABI, signer);
         
         // Update UI
-        accountAddress.textContent = truncateString(accounts[0], 12);
-        const balance = await provider.getBalance(accounts[0]);
-        accountBalance.textContent = ethers.utils.formatEther(balance).substring(0, 6); // Display in EDU
+        accountAddress.textContent = `${currentAccount.substring(0, 6)}...${currentAccount.substring(38)}`;
+        
+        // Get and display balance
+        const balance = await provider.getBalance(currentAccount);
+        // Format balance with EDU symbol already shown in HTML
+        accountBalance.textContent = ethers.utils.formatEther(balance).substring(0, 6);
         
         // Reload data
         loadUserData();
@@ -1708,7 +1661,7 @@ async function revokeRequest(dataId, requestId) {
         
         // Confirm revocation
         if (!confirm('Are you sure you want to revoke this access?')) {
-            return;
+                return;
         }
         
         showNotification('Revoking access... Please wait', 'info');
@@ -1727,15 +1680,15 @@ async function revokeRequest(dataId, requestId) {
                 gasPrice: ethers.utils.parseUnits('10', 'gwei')
             });
             
-            await claimTx.wait();
+        await claimTx.wait();
             showNotification('Payment processed successfully', 'success');
             
             // Check if this already marked it as revoked
             const updatedRequest = await contract.getAccessRequest(dataId, requestId);
             if (updatedRequest.isRevoked) {
                 showNotification('Access successfully revoked', 'success');
-                loadRequests();
-                return;
+            loadRequests();
+            return;
             }
         } catch (claimError) {
             console.error('Error processing payment:', claimError);
@@ -1780,9 +1733,9 @@ async function revokeRequest(dataId, requestId) {
             // Update UI as a fallback
             const requestCard = document.querySelector(`.request-card[data-data-id="${dataId}"][data-request-id="${requestId}"]`);
             if (requestCard) {
-                const statusEl = requestCard.querySelector('.status');
-                if (statusEl) {
-                    statusEl.className = 'status revoked';
+                    const statusEl = requestCard.querySelector('.status');
+                    if (statusEl) {
+                        statusEl.className = 'status revoked';
                     statusEl.textContent = 'Revoked (UI Only)';
                 }
                 
@@ -1792,7 +1745,7 @@ async function revokeRequest(dataId, requestId) {
                 }
             }
             
-            loadRequests();
+                loadRequests();
         }
     } catch (error) {
         console.error('Revocation error:', error);
@@ -1802,13 +1755,41 @@ async function revokeRequest(dataId, requestId) {
 
 // Show notification
 function showNotification(message, type = 'info') {
-    notification.className = 'hidden';
-    setTimeout(() => {
-        notificationText.textContent = message;
-        notification.classList.remove('hidden', 'error', 'success', 'warning');
+    const notification = document.getElementById('notification');
+    const notificationText = document.getElementById('notification-text');
+    
+    // Set message content
+    notificationText.textContent = message;
+    
+    // Remove any existing classes and add the new type
+    notification.className = 'notification';
+    if (type) {
         notification.classList.add(type);
-    }, 10);
+    }
+    
+    // Show notification
+    notification.classList.remove('hidden');
+    
+    // Auto-hide after 4 seconds
+    setTimeout(() => {
+        hideNotification();
+    }, 4000);
 }
+
+function hideNotification() {
+    const notification = document.getElementById('notification');
+    notification.classList.add('hidden');
+}
+
+// Close notification when clicking the X button
+document.addEventListener('DOMContentLoaded', function() {
+    const closeNotificationBtn = document.getElementById('close-notification');
+    if (closeNotificationBtn) {
+        closeNotificationBtn.addEventListener('click', () => {
+            hideNotification();
+        });
+    }
+});
 
 // Helper function to truncate strings
 function truncateString(str, length) {
@@ -1821,9 +1802,6 @@ function formatDate(timestamp) {
     const date = new Date(timestamp * 1000);
     return date.toLocaleString();
 }
-
-// Initialize the application when the DOM is loaded
-document.addEventListener('DOMContentLoaded', init);
 
 // Make functions available globally
 window.openRequestModal = openRequestModal;
@@ -1972,15 +1950,15 @@ async function previewFile(ipfsHash) {
             const previewContainer = document.createElement('div');
             previewContainer.className = 'preview-container';
             previewContainer.innerHTML = `
+                <iframe id="preview-frame" sandbox="allow-scripts"></iframe>
+                <div id="preview-loader" class="preview-loader">Loading preview...</div>
+                <div id="preview-error" class="preview-error hidden">Unable to preview this file type</div>
+                <div class="anti-screenshot-overlay">PREVIEW ONLY - SECURE VIEW</div>
                 <div class="preview-controls">
                     <button id="zoom-in" class="zoom-btn" title="Zoom In">+</button>
                     <button id="zoom-out" class="zoom-btn" title="Zoom Out">-</button>
                     <button id="zoom-reset" class="zoom-btn" title="Reset Zoom">Reset</button>
                 </div>
-                <div class="anti-screenshot-overlay">PREVIEW ONLY - SECURE VIEW</div>
-                <iframe id="preview-frame" sandbox="allow-scripts" style="width:100%;height:100%;border:none;"></iframe>
-                <div id="preview-loader" class="preview-loader">Loading preview...</div>
-                <div id="preview-error" class="preview-error hidden">Unable to preview this file type</div>
             `;
             
             modalContent.appendChild(header);
@@ -1995,31 +1973,31 @@ async function previewFile(ipfsHash) {
                     document.getElementById('preview-frame').src = 'about:blank';
                 }
             });
-
-            // Set up zoom functionality
-            const zoomIn = document.getElementById('zoom-in');
-            const zoomOut = document.getElementById('zoom-out');
-            const zoomReset = document.getElementById('zoom-reset');
             
-            if (zoomIn && zoomOut && zoomReset) {
-                zoomIn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    applyZoom('in');
-                });
-                
-                zoomOut.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    applyZoom('out');
-                });
-                
-                zoomReset.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    applyZoom('reset');
-                });
-            }
+            // Setup zoom controls
+            document.getElementById('zoom-in').addEventListener('click', () => {
+                const frame = document.getElementById('preview-frame');
+                const currentZoom = parseFloat(frame.dataset.zoomLevel || '1');
+                const newZoom = Math.min(currentZoom + 0.1, 2);
+                frame.style.transform = `scale(${newZoom})`;
+                frame.dataset.zoomLevel = newZoom.toString();
+            });
             
-            // Setup screenshot detection
-            setupScreenshotDetection();
+            document.getElementById('zoom-out').addEventListener('click', () => {
+                const frame = document.getElementById('preview-frame');
+                const currentZoom = parseFloat(frame.dataset.zoomLevel || '1');
+                const newZoom = Math.max(currentZoom - 0.1, 0.5);
+                frame.style.transform = `scale(${newZoom})`;
+                frame.dataset.zoomLevel = newZoom.toString();
+            });
+            
+            document.getElementById('zoom-reset').addEventListener('click', () => {
+                const frame = document.getElementById('preview-frame');
+                frame.style.transform = 'scale(1)';
+                frame.dataset.zoomLevel = '1';
+                frame.dataset.dragX = '0';
+                frame.dataset.dragY = '0';
+            });
         }
         
         // Show the modal
@@ -2313,4 +2291,22 @@ function setupDragging(frame) {
 function setupScreenshotDetection() {
     // Screenshot detection disabled
     console.log('Screenshot detection has been disabled');
+}
+
+// Add somewhere near the connectWallet function
+// Function to disconnect wallet and return to landing page
+function disconnectWallet() {
+    // Clear currentAccount
+    currentAccount = null;
+    
+    // Clear session storage
+    sessionStorage.removeItem('fromLanding');
+    
+    // Show notification
+    showNotification('Disconnecting wallet...', 'info');
+    
+    // Short delay before redirect
+    setTimeout(() => {
+        window.location.href = 'landing.html';
+    }, 1000);
 }

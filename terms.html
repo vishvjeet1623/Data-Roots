@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terms and Conditions - Data Roots</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Spline Viewer Script -->
+    <script type="module" src="https://unpkg.com/@splinetool/viewer@1.9.79/build/spline-viewer.js"></script>
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .spline-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            z-index: 100;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .header-logo {
+            color: var(--primary-color);
+            font-size: 1.8rem;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .content {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex: 1;
+            padding: 0 20px;
+            text-align: center;
+        }
+
+        .coming-soon {
+            font-size: 4rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            text-shadow: 0 0 20px rgba(10, 189, 198, 0.5);
+            animation: pulse 2s infinite;
+            margin-top: 80px;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 0.7;
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0.7;
+            }
+        }
+
+        .back-link {
+            margin-top: 30px;
+            color: #ffffff;
+            text-decoration: none;
+            padding: 10px 20px;
+            border: 1px solid var(--primary-color);
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+
+        .back-link:hover {
+            background-color: var(--primary-color);
+            color: #000000;
+        }
+    </style>
+</head>
+<body>
+    <!-- Spline Background -->
+    <div class="spline-container">
+        <spline-viewer url="https://prod.spline.design/jcBxhhVp-UB6Lujt/scene.splinecode"></spline-viewer>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+        <a href="landing.html" class="header-logo">Data Roots</a>
+    </header>
+
+    <!-- Coming Soon Content -->
+    <div class="content">
+        <div>
+            <h1 class="coming-soon">TERMS AND CONDITIONS<br>COMING SOON</h1>
+            <a href="landing.html" class="back-link">Back to Home</a>
+        </div>
+    </div>
+</body>
+</html> 
