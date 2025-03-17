@@ -5,259 +5,691 @@ const PINATA_JWT = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24
 
 // Contract ABI - This would be generated when compiling the contract
 const contractABI = [
-    // Upload Data
-    {
-        "inputs": [
-            {
-                "internalType": "string",
-                "name": "_ipfsHash",
-                "type": "string"
-            },
-            {
-                "internalType": "enum DataRoots.DataCategory",
-                "name": "_category",
-                "type": "uint8"
-            }
-        ],
-        "name": "uploadData",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    // Request Access
-    {
-        "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "_dataId",
-                "type": "uint256"
-            },
-            {
-                "internalType": "uint256",
-                "name": "_duration",
-                "type": "uint256"
-            }
-        ],
-        "name": "requestAccess",
-        "outputs": [],
-        "stateMutability": "payable",
-        "type": "function"
-    },
-    // Approve Access
-    {
-        "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "_dataId",
-                "type": "uint256"
-            },
-            {
-                "internalType": "uint256",
-                "name": "_requestId",
-                "type": "uint256"
-            }
-        ],
-        "name": "approveAccess",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    // Revoke Access
-    {
-        "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "_dataId",
-                "type": "uint256"
-            },
-            {
-                "internalType": "uint256",
-                "name": "_requestId",
-                "type": "uint256"
-            }
-        ],
-        "name": "revokeAccess",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    // Get Data Entry
-    {
-        "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "_dataId",
-                "type": "uint256"
-            }
-        ],
-        "name": "getDataEntry",
-        "outputs": [
-            {
-                "components": [
-                    {
-                        "internalType": "string",
-                        "name": "ipfsHash",
-                        "type": "string"
-                    },
-                    {
-                        "internalType": "address",
-                        "name": "owner",
-                        "type": "address"
-                    },
-                    {
-                        "internalType": "enum DataRoots.DataCategory",
-                        "name": "category",
-                        "type": "uint8"
-                    },
-                    {
-                        "internalType": "bool",
-                        "name": "isActive",
-                        "type": "bool"
-                    },
-                    {
-                        "internalType": "uint256",
-                        "name": "uploadTime",
-                        "type": "uint256"
-                    }
-                ],
-                "internalType": "struct DataRoots.DataEntry",
-                "name": "",
-                "type": "tuple"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    // Get Access Request
-    {
-        "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "_dataId",
-                "type": "uint256"
-            },
-            {
-                "internalType": "uint256",
-                "name": "_requestId",
-                "type": "uint256"
-            }
-        ],
-        "name": "getAccessRequest",
-        "outputs": [
-            {
-                "components": [
-                    {
-                        "internalType": "address",
-                        "name": "requester",
-                        "type": "address"
-                    },
-                    {
-                        "internalType": "uint256",
-                        "name": "startTime",
-                        "type": "uint256"
-                    },
-                    {
-                        "internalType": "uint256",
-                        "name": "endTime",
-                        "type": "uint256"
-                    },
-                    {
-                        "internalType": "bool",
-                        "name": "isApproved",
-                        "type": "bool"
-                    },
-                    {
-                        "internalType": "bool",
-                        "name": "isRevoked",
-                        "type": "bool"
-                    }
-                ],
-                "internalType": "struct DataRoots.AccessRequest",
-                "name": "",
-                "type": "tuple"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    // Get User Data
-    {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "_user",
-                "type": "address"
-            }
-        ],
-        "name": "getUserData",
-        "outputs": [
-            {
-                "internalType": "uint256[]",
-                "name": "",
-                "type": "uint256[]"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    // Get User Requests
-    {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "_user",
-                "type": "address"
-            }
-        ],
-        "name": "getUserRequests",
-        "outputs": [
-            {
-                "internalType": "uint256[]",
-                "name": "",
-                "type": "uint256[]"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    // Get Data Requests
-    {
-        "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "_dataId",
-                "type": "uint256"
-            }
-        ],
-        "name": "getDataRequests",
-        "outputs": [
-            {
-                "internalType": "uint256[]",
-                "name": "",
-                "type": "uint256[]"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    // Data Price
-    {
-        "inputs": [],
-        "name": "DATA_PRICE",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    }
+	{
+		"inputs": [],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			}
+		],
+		"name": "OwnableInvalidOwner",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "OwnableUnauthorizedAccount",
+		"type": "error"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "dataId",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "requestId",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "requester",
+				"type": "address"
+			}
+		],
+		"name": "AccessApproved",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "dataId",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "requestId",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "requester",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "duration",
+				"type": "uint256"
+			}
+		],
+		"name": "AccessRequested",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "dataId",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "requestId",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "requester",
+				"type": "address"
+			}
+		],
+		"name": "AccessRevoked",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "dataId",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "ipfsHash",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "name",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"internalType": "enum DataRoots.DataCategory",
+				"name": "category",
+				"type": "uint8"
+			}
+		],
+		"name": "DataUploaded",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "previousOwner",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "OwnershipTransferred",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "dataId",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "requestId",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "requester",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "RefundIssued",
+		"type": "event"
+	},
+	{
+		"inputs": [],
+		"name": "DATA_PRICE",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "REFUND_PERCENTAGE",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "accessRequests",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "requester",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "startTime",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "endTime",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bool",
+				"name": "isApproved",
+				"type": "bool"
+			},
+			{
+				"internalType": "bool",
+				"name": "isRevoked",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_dataId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_requestId",
+				"type": "uint256"
+			}
+		],
+		"name": "approveAccess",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "dataEntries",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "ipfsHash",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "name",
+				"type": "string"
+			},
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"internalType": "enum DataRoots.DataCategory",
+				"name": "category",
+				"type": "uint8"
+			},
+			{
+				"internalType": "bool",
+				"name": "isActive",
+				"type": "bool"
+			},
+			{
+				"internalType": "uint256",
+				"name": "uploadTime",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "dataRequests",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_dataId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_requestId",
+				"type": "uint256"
+			}
+		],
+		"name": "getAccessRequest",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "address",
+						"name": "requester",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "startTime",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "endTime",
+						"type": "uint256"
+					},
+					{
+						"internalType": "bool",
+						"name": "isApproved",
+						"type": "bool"
+					},
+					{
+						"internalType": "bool",
+						"name": "isRevoked",
+						"type": "bool"
+					}
+				],
+				"internalType": "struct DataRoots.AccessRequest",
+				"name": "",
+				"type": "tuple"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_dataId",
+				"type": "uint256"
+			}
+		],
+		"name": "getDataEntry",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "string",
+						"name": "ipfsHash",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "name",
+						"type": "string"
+					},
+					{
+						"internalType": "address",
+						"name": "owner",
+						"type": "address"
+					},
+					{
+						"internalType": "enum DataRoots.DataCategory",
+						"name": "category",
+						"type": "uint8"
+					},
+					{
+						"internalType": "bool",
+						"name": "isActive",
+						"type": "bool"
+					},
+					{
+						"internalType": "uint256",
+						"name": "uploadTime",
+						"type": "uint256"
+					}
+				],
+				"internalType": "struct DataRoots.DataEntry",
+				"name": "",
+				"type": "tuple"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_dataId",
+				"type": "uint256"
+			}
+		],
+		"name": "getDataRequests",
+		"outputs": [
+			{
+				"internalType": "uint256[]",
+				"name": "",
+				"type": "uint256[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_user",
+				"type": "address"
+			}
+		],
+		"name": "getUserData",
+		"outputs": [
+			{
+				"internalType": "uint256[]",
+				"name": "",
+				"type": "uint256[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_user",
+				"type": "address"
+			}
+		],
+		"name": "getUserRequests",
+		"outputs": [
+			{
+				"internalType": "uint256[]",
+				"name": "",
+				"type": "uint256[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "owner",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "paymentTransferred",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "renounceOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_dataId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_duration",
+				"type": "uint256"
+			}
+		],
+		"name": "requestAccess",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_dataId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_requestId",
+				"type": "uint256"
+			}
+		],
+		"name": "revokeAccess",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "transferOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_ipfsHash",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_name",
+				"type": "string"
+			},
+			{
+				"internalType": "enum DataRoots.DataCategory",
+				"name": "_category",
+				"type": "uint8"
+			}
+		],
+		"name": "uploadData",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "userData",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "userRequests",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"stateMutability": "payable",
+		"type": "receive"
+	}
 ];
 
+
+
+
 // Contract address - This would be the deployed contract address
-const contractAddress = "0xb207f00cDFf194b6e14990b13A605B957E5AB096"; // Replace with actual address
+const contractAddress = "0x0049cb70A812CA1A8616e36af659f94aC372e9c5"; // Replace with actual address
 
 // Global variables
 let provider;
@@ -427,25 +859,52 @@ async function loadUserData() {
     try {
         userDataList.innerHTML = '<p class="loading">Loading your data...</p>';
         
-        const dataIds = await contract.getUserData(currentAccount);
+        // Get data you own
+        const ownedDataIds = await contract.getUserData(currentAccount);
         
-        if (dataIds.length === 0) {
-            userDataList.innerHTML = '<p class="empty-message">You have not uploaded any data yet</p>';
+        // Get your approved requests
+        const userRequestIds = await contract.getUserRequests(currentAccount);
+        const approvedDataIds = new Set();
+        
+        // Check each request to find approved ones
+        for (const requestId of userRequestIds) {
+            try {
+                const request = await contract.getAccessRequest(requestId, requestId);
+                if (request.isApproved && !request.isRevoked && Date.now() / 1000 < request.endTime) {
+                    approvedDataIds.add(requestId);
+                }
+            } catch (error) {
+                continue;
+            }
+        }
+        
+        // Combine owned and approved data IDs
+        const allDataIds = [...new Set([...ownedDataIds, ...approvedDataIds])];
+        
+        if (allDataIds.length === 0) {
+            userDataList.innerHTML = '<p class="empty-message">You have no data or approved access yet</p>';
             return;
         }
         
         let html = '';
         
-        for (const dataId of dataIds) {
+        for (const dataId of allDataIds) {
             const data = await contract.getDataEntry(dataId);
+            const isOwner = data.owner.toLowerCase() === currentAccount.toLowerCase();
             
             html += `
                 <div class="data-card">
-                    <h3>Data #${dataId}</h3>
-                    <p><strong>IPFS Hash:</strong> ${truncateString(data.ipfsHash, 20)}</p>
+                    <h3>${data.name}</h3>
+                    <p><strong>IPFS Hash:</strong> <span class="ipfs-hash">${data.ipfsHash}</span>
+                        <button class="copy-btn" onclick="copyToClipboard('${data.ipfsHash}')">Copy</button>
+                    </p>
                     <p><strong>Category:</strong> ${data.category === 0 ? 'Personal' : 'Educational'}</p>
                     <p><strong>Upload Time:</strong> ${formatDate(data.uploadTime)}</p>
                     <p><strong>Status:</strong> ${data.isActive ? 'Active' : 'Inactive'}</p>
+                    <p><strong>Access Type:</strong> ${isOwner ? 'Owner' : 'Granted Access'}</p>
+                    <div class="actions">
+                        <a href="https://ipfs.io/ipfs/${data.ipfsHash}" target="_blank" class="view-btn">View File</a>
+                    </div>
                 </div>
             `;
         }
@@ -455,6 +914,15 @@ async function loadUserData() {
         console.error('Error loading user data:', error);
         userDataList.innerHTML = '<p class="empty-message">Error loading data. Please try again.</p>';
     }
+}
+
+// Add copy to clipboard function
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        showNotification('IPFS hash copied to clipboard', 'success');
+    }).catch(err => {
+        showNotification('Failed to copy hash', 'error');
+    });
 }
 
 // Load all data
@@ -481,7 +949,7 @@ async function loadAllData() {
                 
                 html += `
                     <div class="data-card">
-                        <h3>Data #${i}</h3>
+                        <h3>${data.name}</h3>
                         <p><strong>Owner:</strong> ${truncateString(data.owner, 10)}</p>
                         <p><strong>IPFS Hash:</strong> ${truncateString(data.ipfsHash, 20)}</p>
                         <p><strong>Category:</strong> ${data.category === 0 ? 'Personal' : 'Educational'}</p>
@@ -525,42 +993,48 @@ async function loadRequests() {
             const requestIds = await contract.getDataRequests(dataId);
             
             for (const requestId of requestIds) {
-                const request = await contract.getAccessRequest(dataId, requestId);
-                
-                incomingCount++;
-                
-                let statusClass = 'pending';
-                let statusText = 'Pending';
-                let actions = `<button onclick="approveRequest(${dataId}, ${requestId})">Approve</button>`;
-                
-                if (request.isApproved) {
-                    statusClass = 'approved';
-                    statusText = 'Approved';
+                try {
+                    const request = await contract.getAccessRequest(dataId, requestId);
+                    const data = await contract.getDataEntry(dataId);
                     
-                    if (!request.isRevoked && Date.now() / 1000 < request.endTime) {
-                        actions = `<button onclick="revokeRequest(${dataId}, ${requestId})">Revoke</button>`;
-                    } else if (request.isRevoked) {
-                        statusClass = 'revoked';
-                        statusText = 'Revoked';
-                        actions = '';
-                    } else {
-                        statusText = 'Expired';
-                        actions = '';
+                    incomingCount++;
+                    
+                    let statusClass = 'pending';
+                    let statusText = 'Pending';
+                    let actions = `<button onclick="approveRequest(${dataId}, ${requestId})">Approve</button>`;
+                    
+                    if (request.isApproved) {
+                        statusClass = 'approved';
+                        statusText = 'Approved';
+                        
+                        if (!request.isRevoked && Date.now() / 1000 < request.endTime) {
+                            actions = `<button onclick="revokeRequest(${dataId}, ${requestId})">Revoke</button>`;
+                        } else if (request.isRevoked) {
+                            statusClass = 'revoked';
+                            statusText = 'Revoked';
+                            actions = '';
+                        } else {
+                            statusText = 'Expired';
+                            actions = '';
+                        }
                     }
-                }
-                
-                incomingHtml += `
-                    <div class="request-card">
-                        <h4>Request for Data #${dataId}</h4>
-                        <span class="status ${statusClass}">${statusText}</span>
-                        <p><strong>Requester:</strong> ${truncateString(request.requester, 10)}</p>
-                        <p><strong>Start Time:</strong> ${formatDate(request.startTime)}</p>
-                        <p><strong>End Time:</strong> ${formatDate(request.endTime)}</p>
-                        <div class="actions">
-                            ${actions}
+                    
+                    incomingHtml += `
+                        <div class="request-card">
+                            <h4>Request for "${data.name}"</h4>
+                            <span class="status ${statusClass}">${statusText}</span>
+                            <p><strong>Requester:</strong> ${truncateString(request.requester, 10)}</p>
+                            <p><strong>Start Time:</strong> ${formatDate(request.startTime)}</p>
+                            <p><strong>End Time:</strong> ${formatDate(request.endTime)}</p>
+                            <div class="actions">
+                                ${actions}
+                            </div>
                         </div>
-                    </div>
-                `;
+                    `;
+                } catch (error) {
+                    console.error('Error processing request:', error);
+                    continue;
+                }
             }
         }
         
@@ -579,40 +1053,52 @@ async function loadRequests() {
             return;
         }
         
-        // In a real application, you would need a way to map request IDs to data IDs
-        // For this example, we'll assume a simple mapping
         for (const requestId of userRequestIds) {
-            // This is a simplification - in a real app, you'd need to know which data ID this request belongs to
-            const dataId = requestId; // This is just a placeholder
-            
             try {
-                const request = await contract.getAccessRequest(dataId, requestId);
-                
-                let statusClass = 'pending';
-                let statusText = 'Pending';
-                
-                if (request.isApproved) {
-                    statusClass = 'approved';
-                    statusText = 'Approved';
-                    
-                    if (request.isRevoked) {
-                        statusClass = 'revoked';
-                        statusText = 'Revoked';
-                    } else if (Date.now() / 1000 > request.endTime) {
-                        statusText = 'Expired';
+                // Try to find the data ID associated with this request
+                let foundDataId = null;
+                for (let i = 1; i <= 10; i++) { // Assuming max data ID is 10
+                    try {
+                        const request = await contract.getAccessRequest(i, requestId);
+                        if (request.requester.toLowerCase() === currentAccount.toLowerCase()) {
+                            foundDataId = i;
+                            break;
+                        }
+                    } catch (error) {
+                        continue;
                     }
                 }
                 
-                outgoingHtml += `
-                    <div class="request-card">
-                        <h4>Request for Data #${dataId}</h4>
-                        <span class="status ${statusClass}">${statusText}</span>
-                        <p><strong>Start Time:</strong> ${formatDate(request.startTime)}</p>
-                        <p><strong>End Time:</strong> ${formatDate(request.endTime)}</p>
-                    </div>
-                `;
+                if (foundDataId) {
+                    const request = await contract.getAccessRequest(foundDataId, requestId);
+                    const data = await contract.getDataEntry(foundDataId);
+                    
+                    let statusClass = 'pending';
+                    let statusText = 'Pending';
+                    
+                    if (request.isApproved) {
+                        statusClass = 'approved';
+                        statusText = 'Approved';
+                        
+                        if (request.isRevoked) {
+                            statusClass = 'revoked';
+                            statusText = 'Revoked';
+                        } else if (Date.now() / 1000 > request.endTime) {
+                            statusText = 'Expired';
+                        }
+                    }
+                    
+                    outgoingHtml += `
+                        <div class="request-card">
+                            <h4>Request for "${data.name}"</h4>
+                            <span class="status ${statusClass}">${statusText}</span>
+                            <p><strong>Start Time:</strong> ${formatDate(request.startTime)}</p>
+                            <p><strong>End Time:</strong> ${formatDate(request.endTime)}</p>
+                        </div>
+                    `;
+                }
             } catch (error) {
-                // Skip if request doesn't exist
+                console.error('Error processing outgoing request:', error);
                 continue;
             }
         }
@@ -631,9 +1117,15 @@ async function handleUploadData(e) {
     
     const file = fileUpload.files[0];
     const category = parseInt(document.getElementById('data-category').value);
+    const dataName = document.getElementById('data-name').value;
     
     if (!file) {
         showNotification('Please select a file to upload', 'error');
+        return;
+    }
+    
+    if (!dataName) {
+        showNotification('Please enter a name for your data', 'error');
         return;
     }
     
@@ -666,7 +1158,7 @@ async function handleUploadData(e) {
         showNotification('File uploaded to IPFS, now uploading to blockchain...', 'info');
         
         // Upload to blockchain
-        const tx = await contract.uploadData(ipfsHash, category);
+        const tx = await contract.uploadData(ipfsHash, dataName, category);
         await tx.wait();
         
         showNotification('Data uploaded successfully', 'success');
@@ -674,6 +1166,7 @@ async function handleUploadData(e) {
         // Reset form
         fileUpload.value = '';
         ipfsHashInput.value = '';
+        document.getElementById('data-name').value = '';
         
         // Reload data
         loadUserData();
@@ -751,8 +1244,62 @@ async function revokeRequest(dataId, requestId) {
     try {
         showNotification('Revoking access...', 'info');
         
-        const tx = await contract.revokeAccess(dataId, requestId);
-        await tx.wait();
+        // Get the request details first to check if it's still valid
+        const request = await contract.getAccessRequest(dataId, requestId);
+        
+        // Check if the request is already revoked or expired
+        if (request.isRevoked) {
+            showNotification('This access has already been revoked', 'warning');
+            return;
+        }
+        
+        if (Date.now() / 1000 > request.endTime) {
+            showNotification('This access has already expired', 'warning');
+            return;
+        }
+        
+        // Get contract balance before revoking
+        const contractBalance = await provider.getBalance(contractAddress);
+        console.log('Contract balance:', ethers.utils.formatEther(contractBalance));
+        
+        // Get the data price and refund percentage
+        const dataPrice = await contract.DATA_PRICE();
+        const refundPercentage = await contract.REFUND_PERCENTAGE();
+        
+        // Calculate remaining time for refund
+        const remainingTime = request.endTime - Math.floor(Date.now() / 1000);
+        const totalDuration = request.endTime - request.startTime;
+        
+        // Calculate refund amount
+        const refundAmount = dataPrice.mul(remainingTime).mul(refundPercentage).div(totalDuration).div(100);
+        
+        console.log('Refund details:', {
+            dataPrice: ethers.utils.formatEther(dataPrice),
+            refundPercentage: refundPercentage.toString(),
+            remainingTime: remainingTime,
+            totalDuration: totalDuration,
+            refundAmount: ethers.utils.formatEther(refundAmount)
+        });
+        
+        // Check if contract has enough balance for refund
+        if (contractBalance.lt(refundAmount)) {
+            // If contract doesn't have enough balance, show a warning but still allow revoking
+            showNotification('Warning: Contract has insufficient balance for refund. Access will be revoked without refund.', 'warning');
+            
+            // Add a small delay to let the user see the warning
+            await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+        
+        // Add gas limit to the transaction
+        const tx = await contract.revokeAccess(dataId, requestId, {
+            gasLimit: 300000 // Increased gas limit
+        });
+        
+        console.log('Transaction sent:', tx.hash);
+        
+        // Wait for transaction receipt
+        const receipt = await tx.wait();
+        console.log('Transaction receipt:', receipt);
         
         showNotification('Access revoked successfully', 'success');
         
@@ -760,7 +1307,25 @@ async function revokeRequest(dataId, requestId) {
         loadRequests();
     } catch (error) {
         console.error('Error revoking access:', error);
-        showNotification('Failed to revoke access', 'error');
+        
+        // Log detailed error information
+        if (error.data) {
+            console.error('Error data:', error.data);
+        }
+        if (error.transaction) {
+            console.error('Transaction:', error.transaction);
+        }
+        
+        // Provide more specific error messages
+        if (error.message.includes('Refund transfer failed')) {
+            showNotification('Failed to revoke access: Refund transfer failed. Please try again or contact support.', 'error');
+        } else if (error.message.includes('insufficient funds')) {
+            showNotification('Failed to revoke access: Insufficient funds for gas fee', 'error');
+        } else if (error.message.includes('execution reverted')) {
+            showNotification('Failed to revoke access: Transaction reverted. Please try again or contact support.', 'error');
+        } else {
+            showNotification('Failed to revoke access: ' + error.message, 'error');
+        }
     }
 }
 
@@ -792,4 +1357,5 @@ document.addEventListener('DOMContentLoaded', init);
 // Make functions available globally
 window.openRequestModal = openRequestModal;
 window.approveRequest = approveRequest;
-window.revokeRequest = revokeRequest; 
+window.revokeRequest = revokeRequest;
+window.copyToClipboard = copyToClipboard;
