@@ -3,6 +3,14 @@ const PINATA_API_KEY = '04b078e0ad30bb4a6dc1';
 const PINATA_API_SECRET = '6302b6e79fbe0818f878fe2ac1694d6335a19f2c19c27947eef0d1cc70359184';
 const PINATA_JWT = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiI0YTc5MTIyMC1mOTg2LTQ2OGEtYWFkMC04Y2VmMDU3ZmE4MDYiLCJlbWFpbCI6InNidmo3MjdAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsInBpbl9wb2xpY3kiOnsicmVnaW9ucyI6W3siZGVzaXJlZFJlcGxpY2F0aW9uQ291bnQiOjEsImlkIjoiRlJBMSJ9LHsiZGVzaXJlZFJlcGxpY2F0aW9uQ291bnQiOjEsImlkIjoiTllDMSJ9XSwidmVyc2lvbiI6MX0sIm1mYV9lbmFibGVkIjpmYWxzZSwic3RhdHVzIjoiQUNUSVZFIn0sImF1dGhlbnRpY2F0aW9uVHlwZSI6InNjb3BlZEtleSIsInNjb3BlZEtleUtleSI6IjA0YjA3OGUwYWQzMGJiNGE2ZGMxIiwic2NvcGVkS2V5U2VjcmV0IjoiNjMwMmI2ZTc5ZmJlMDgxOGY4NzhmZTJhYzE2OTRkNjMzNWExOWYyYzE5YzI3OTQ3ZWVmMGQxY2M3MDM1OTE4NCIsImV4cCI6MTc3MzczOTg1NX0.7zh6EHGHS-LssWoAFCG90Vtp0sIIbosKslm8n7-D2OA';
 
+// EDU Chain Configuration
+const EDU_CHAIN_RPC_URL = 'https://rpc.open-campus-codex.gelato.digital';
+const EDU_CHAIN_ID = 656476;  // Correct chain ID for EDU Chain (0xa045c in hex)
+const EDU_CHAIN_NAME = 'EDU Chain Testnet';
+const EDU_CHAIN_SYMBOL = 'EDU';
+const EDU_CHAIN_DECIMALS = 18;
+const EDU_CHAIN_BLOCK_EXPLORER = 'https://explorer.open-campus-codex.gelato.digital';
+
 // Contract ABI - This would be generated when compiling the contract
 const contractABI = [
 	{
@@ -299,7 +307,7 @@ const contractABI = [
 				"indexed": true,
                 "internalType": "uint256",
 				"name": "requestId",
-				"type": "uint256"
+                "type": "uint256"
 			},
 			{
 				"indexed": true,
@@ -480,8 +488,8 @@ const contractABI = [
 			{
 				"internalType": "string",
 				"name": "name",
-				"type": "string"
-			},
+                        "type": "string"
+                    },
                     {
                         "internalType": "address",
                         "name": "owner",
@@ -575,7 +583,7 @@ const contractABI = [
 					{
 						"internalType": "bool",
 						"name": "isPaid",
-						"type": "bool"
+                        "type": "bool"
                     }
                 ],
                 "internalType": "struct DataRoots.AccessRequest",
@@ -781,6 +789,8 @@ let provider;
 let signer;
 let contract;
 let currentAccount;
+let lastRefreshTime = {};
+const MANUAL_REFRESH_COOLDOWN = 5000; // 5 seconds cooldown after manual refresh
 
 // DOM Elements
 const connectWalletBtn = document.getElementById('connect-wallet');
@@ -790,6 +800,10 @@ const accountBalance = document.getElementById('account-balance');
 const notification = document.getElementById('notification');
 const notificationText = document.getElementById('notification-text');
 const closeNotificationBtn = document.getElementById('close-notification');
+const connectLoading = document.getElementById('connect-loading');
+const connectionStatus = document.getElementById('connection-status');
+const metamaskBanner = document.getElementById('metamask-banner');
+const closeMetamaskBanner = document.getElementById('close-metamask-banner');
 const tabBtns = document.querySelectorAll('.tab-btn');
 const tabContents = document.querySelectorAll('.tab-content');
 const uploadForm = document.getElementById('upload-form');
@@ -803,29 +817,153 @@ const requestAccessForm = document.getElementById('request-access-form');
 const dataIdInput = document.getElementById('data-id');
 const fileUpload = document.getElementById('file-upload');
 const ipfsHashInput = document.getElementById('ipfs-hash');
+const refreshMyDataBtn = document.getElementById('refresh-my-data');
+const refreshBrowseBtn = document.getElementById('refresh-browse');
+const refreshRequestsBtn = document.getElementById('refresh-requests');
 
 // Initialize the application
 async function init() {
     setupEventListeners();
     
-    // Check if MetaMask is installed
-    if (window.ethereum) {
-        provider = new ethers.providers.Web3Provider(window.ethereum);
-        
-        // Check if already connected
-        const accounts = await provider.listAccounts();
-        if (accounts.length > 0) {
-            await connectWallet();
-        }
-    } else {
-        showNotification('Please install MetaMask to use this application', 'error');
+    // Check if MetaMask is installed and banner wasn't dismissed previously
+    const metamaskBannerDismissed = localStorage.getItem('metamaskBannerDismissed');
+    if (!window.ethereum && metamaskBannerDismissed !== 'true') {
+        // Show MetaMask banner if not installed and not dismissed
+        metamaskBanner.classList.remove('hidden');
     }
+    
+    // Create a read-only provider for initial page load
+        try {
+            provider = new ethers.providers.JsonRpcProvider(EDU_CHAIN_RPC_URL);
+        console.log('Created read-only provider for EDU Chain');
+        } catch (error) {
+        console.error('Error setting up initial provider:', error);
+    }
+    
+    // Setup auto-refresh for tab content
+    setupAutoRefresh();
+}
+
+// Setup auto-refresh for tab content
+function setupAutoRefresh() {
+    // Refresh data every 10 seconds
+    const REFRESH_INTERVAL = 10000;
+    
+    // Set interval for auto-refresh based on active tab
+    setInterval(() => {
+        // Find active tab
+        const activeTab = document.querySelector('.tab-btn.active');
+        if (!activeTab) return;
+        
+        const tabId = activeTab.getAttribute('data-tab');
+        
+        // Only refresh if wallet is connected
+        if (!currentAccount) return;
+        
+        // Check if it's too soon after a manual refresh
+        const now = Date.now();
+        if (lastRefreshTime[tabId] && (now - lastRefreshTime[tabId] < MANUAL_REFRESH_COOLDOWN)) {
+            console.log(`Skipping auto-refresh for ${tabId} - recent manual refresh`);
+            return;
+        }
+        
+        // Refresh based on tab type
+        switch (tabId) {
+            case 'my-data':
+                loadUserData(true); // true = auto refresh
+                break;
+            case 'browse':
+                loadAllData(true); // true = auto refresh
+                break;
+            case 'requests':
+                loadRequests(true); // true = auto refresh
+                break;
+        }
+    }, REFRESH_INTERVAL);
+    
+    console.log('Auto-refresh activated: Tab content will reload every 10 seconds');
 }
 
 // Setup event listeners
 function setupEventListeners() {
-    // Connect wallet button
-    connectWalletBtn.addEventListener('click', connectWallet);
+    // Connect wallet button - now fully manual
+    connectWalletBtn.addEventListener('click', async () => {
+        try {
+            // Check if MetaMask is installed
+            if (!window.ethereum) {
+                // Show MetaMask banner if not installed
+                metamaskBanner.classList.remove('hidden');
+                return;
+            }
+            
+            // Show loading indicator and status
+            connectLoading.classList.add('visible');
+            connectionStatus.textContent = 'Connecting to wallet...';
+            connectionStatus.classList.add('visible');
+            
+            // Disable button while connecting
+            connectWalletBtn.disabled = true;
+            connectWalletBtn.textContent = 'Connecting...';
+            
+            await connectWallet();
+            
+        } catch (error) {
+            console.error('Error connecting wallet:', error);
+            showNotification('Failed to connect wallet: ' + error.message, 'error');
+        } finally {
+            // Hide loading indicator and reset button
+            connectLoading.classList.remove('visible');
+            connectionStatus.classList.remove('visible');
+            connectWalletBtn.disabled = false;
+            connectWalletBtn.textContent = 'Connect Wallet';
+        }
+    });
+    
+    // Refresh buttons
+    if (refreshMyDataBtn) {
+        refreshMyDataBtn.addEventListener('click', async () => {
+            if (!currentAccount) {
+                showNotification('Please connect your wallet first', 'warning');
+                return;
+            }
+            
+            refreshMyDataBtn.classList.add('loading');
+            await loadUserData();
+            refreshMyDataBtn.classList.remove('loading');
+        });
+    }
+    
+    if (refreshBrowseBtn) {
+        refreshBrowseBtn.addEventListener('click', async () => {
+            if (!currentAccount) {
+                showNotification('Please connect your wallet first', 'warning');
+                return;
+            }
+            
+            refreshBrowseBtn.classList.add('loading');
+            await loadAllData();
+            refreshBrowseBtn.classList.remove('loading');
+        });
+    }
+    
+    if (refreshRequestsBtn) {
+        refreshRequestsBtn.addEventListener('click', async () => {
+            if (!currentAccount) {
+                showNotification('Please connect your wallet first', 'warning');
+                return;
+            }
+            
+            refreshRequestsBtn.classList.add('loading');
+            await loadRequests();
+            refreshRequestsBtn.classList.remove('loading');
+        });
+    }
+    
+    // Close MetaMask banner and remember dismissal
+    closeMetamaskBanner.addEventListener('click', () => {
+        metamaskBanner.classList.add('hidden');
+        localStorage.setItem('metamaskBannerDismissed', 'true');
+    });
     
     // Close notification
     closeNotificationBtn.addEventListener('click', () => {
@@ -834,7 +972,7 @@ function setupEventListeners() {
     
     // Tab navigation
     tabBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', async () => {
             const tabId = btn.getAttribute('data-tab');
             
             // Remove active class from all tabs
@@ -844,6 +982,30 @@ function setupEventListeners() {
             // Add active class to selected tab
             btn.classList.add('active');
             document.getElementById(tabId).classList.add('active');
+            
+            // Only load data if wallet is connected
+            if (currentAccount) {
+                // Show appropriate loading indicators
+                const contentElement = document.getElementById(tabId);
+                if (contentElement) {
+                    contentElement.querySelectorAll('.data-list, .request-list').forEach(list => {
+                        showRefreshIndicator(list.id);
+                    });
+                }
+                
+                // Load content based on tab
+                switch (tabId) {
+                    case 'my-data':
+                        await loadUserData();
+                        break;
+                    case 'browse':
+                        await loadAllData();
+                        break;
+                    case 'requests':
+                        await loadRequests();
+                        break;
+                }
+            }
         });
     });
     
@@ -869,27 +1031,91 @@ function setupEventListeners() {
 // Connect to wallet
 async function connectWallet() {
     try {
-        // Request account access
-        await window.ethereum.request({ method: 'eth_requestAccounts' });
+        // Check if MetaMask is installed
+        if (!window.ethereum) {
+            throw new Error('MetaMask not detected. Please install MetaMask to use this application.');
+        }
+        
+        // Request account access - this will prompt the user
+        connectionStatus.textContent = 'Waiting for approval...';
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        
+        if (!accounts || accounts.length === 0) {
+            throw new Error('No accounts found. Please unlock your MetaMask wallet.');
+        }
         
         // Initialize provider and signer
+        connectionStatus.textContent = 'Initializing connection...';
         provider = new ethers.providers.Web3Provider(window.ethereum);
         signer = provider.getSigner();
         currentAccount = await signer.getAddress();
         
+        // Check if we're on EDU Chain, if not, try to switch
+        connectionStatus.textContent = 'Checking network...';
+        try {
+            const chainId = await provider.getNetwork().then(network => network.chainId);
+            if (chainId !== EDU_CHAIN_ID) {  // Use the constant for EDU Chain's chainId
+                connectionStatus.textContent = 'Switching to EDU Chain...';
+                try {
+                    // Try to switch to EDU Chain
+                    await window.ethereum.request({
+                        method: 'wallet_switchEthereumChain',
+                        params: [{ chainId: '0x' + EDU_CHAIN_ID.toString(16) }], // Convert to hex
+                    });
+                } catch (switchError) {
+                    // This error code indicates that the chain has not been added to MetaMask
+                    if (switchError.code === 4902) {
+                        connectionStatus.textContent = 'Adding EDU Chain to wallet...';
+                        try {
+                            await window.ethereum.request({
+                                method: 'wallet_addEthereumChain',
+                                params: [
+                                    {
+                                        chainId: '0x' + EDU_CHAIN_ID.toString(16), // Convert to hex
+                                        chainName: EDU_CHAIN_NAME,
+                                        nativeCurrency: {
+                                            name: EDU_CHAIN_SYMBOL,
+                                            symbol: EDU_CHAIN_SYMBOL,
+                                            decimals: EDU_CHAIN_DECIMALS
+                                        },
+                                        rpcUrls: [EDU_CHAIN_RPC_URL],
+                                        blockExplorerUrls: [EDU_CHAIN_BLOCK_EXPLORER],
+                                    },
+                                ],
+                            });
+                        } catch (addError) {
+                            console.error('Error adding EDU Chain:', addError);
+                            showNotification('Failed to add EDU Chain network. Please add it manually in your wallet.', 'error');
+                        }
+                    } else {
+                        console.error('Error switching to EDU Chain:', switchError);
+                        showNotification('Failed to switch to EDU Chain network. Please switch manually in your wallet.', 'error');
+                    }
+                }
+                
+                // Reinitialize provider after network switch
+                connectionStatus.textContent = 'Finalizing connection...';
+                provider = new ethers.providers.Web3Provider(window.ethereum);
+                signer = provider.getSigner();
+            }
+        } catch (chainError) {
+            console.error('Error checking chain:', chainError);
+        }
+        
         // Initialize contract
+        connectionStatus.textContent = 'Loading smart contract...';
         contract = new ethers.Contract(contractAddress, contractABI, signer);
         
         // Update UI
+        connectionStatus.textContent = 'Connected successfully!';
         connectWalletBtn.classList.add('hidden');
         accountInfo.classList.remove('hidden');
-        accountAddress.textContent = `${currentAccount.substring(0, 6)}...${currentAccount.substring(38)}`;
-        
-        // Get and display balance
-        const balance = await provider.getBalance(currentAccount);
-        accountBalance.textContent = ethers.utils.formatEther(balance).substring(0, 6);
+        accountAddress.textContent = truncateString(accounts[0], 12);
+        const balance = await provider.getBalance(accounts[0]);
+        accountBalance.textContent = ethers.utils.formatEther(balance).substring(0, 6); // Display in EDU
         
         // Load data
+        connectionStatus.textContent = 'Loading your data...';
         loadUserData();
         loadAllData();
         loadRequests();
@@ -899,8 +1125,15 @@ async function connectWallet() {
         
         showNotification('Wallet connected successfully', 'success');
     } catch (error) {
+        // Hide loading and re-enable button in case of error
+        connectLoading.classList.remove('visible');
+        connectionStatus.classList.remove('visible');
+        connectWalletBtn.disabled = false;
+        connectWalletBtn.textContent = 'Connect Wallet';
+        
         console.error('Error connecting wallet:', error);
         showNotification('Failed to connect wallet: ' + error.message, 'error');
+        throw error; // Re-throw for the calling function to handle
     }
 }
 
@@ -916,11 +1149,9 @@ async function handleAccountChange(accounts) {
         contract = new ethers.Contract(contractAddress, contractABI, signer);
         
         // Update UI
-        accountAddress.textContent = `${currentAccount.substring(0, 6)}...${currentAccount.substring(38)}`;
-        
-        // Get and display balance
-        const balance = await provider.getBalance(currentAccount);
-        accountBalance.textContent = ethers.utils.formatEther(balance).substring(0, 6);
+        accountAddress.textContent = truncateString(accounts[0], 12);
+        const balance = await provider.getBalance(accounts[0]);
+        accountBalance.textContent = ethers.utils.formatEther(balance).substring(0, 6); // Display in EDU
         
         // Reload data
         loadUserData();
@@ -940,9 +1171,15 @@ function resetUI() {
 }
 
 // Load user's data
-async function loadUserData() {
+async function loadUserData(autoRefresh = false) {
     try {
+        // Only show visual indicators for manual refreshes
+        if (!autoRefresh) {
+            showRefreshIndicator('user-data-list');
         userDataList.innerHTML = '<p class="loading">Loading your data...</p>';
+            // Track the refresh time
+            lastRefreshTime['my-data'] = Date.now();
+        }
         
         // Get data you own
         const ownedDataIds = await contract.getUserData(currentAccount);
@@ -976,7 +1213,7 @@ async function loadUserData() {
         
         for (const dataId of allDataIds) {
             try {
-                const data = await contract.getDataEntry(dataId);
+            const data = await contract.getDataEntry(dataId);
                 
                 // Skip inactive (deleted) data
                 if (!data.isActive) {
@@ -985,23 +1222,23 @@ async function loadUserData() {
                 
                 activeDataCount++;
                 const isOwner = data.owner.toLowerCase() === currentAccount.toLowerCase();
-                
-                html += `
-                    <div class="data-card">
+            
+            html += `
+                <div class="data-card">
                         <h3>${data.name}</h3>
                         <p><strong>IPFS Hash:</strong> <span class="ipfs-hash">${data.ipfsHash}</span>
                             <button class="copy-btn" onclick="copyToClipboard('${data.ipfsHash}')">Copy</button>
                         </p>
-                        <p><strong>Category:</strong> ${data.category === 0 ? 'Personal' : 'Educational'}</p>
-                        <p><strong>Upload Time:</strong> ${formatDate(data.uploadTime)}</p>
+                    <p><strong>Category:</strong> ${data.category === 0 ? 'Personal' : 'Educational'}</p>
+                    <p><strong>Upload Time:</strong> ${formatDate(data.uploadTime)}</p>
                         <p><strong>Status:</strong> Active</p>
                         <p><strong>Access Type:</strong> ${isOwner ? 'Owner' : 'Granted Access'}</p>
                         <div class="actions">
-                            <a href="https://ipfs.io/ipfs/${data.ipfsHash}" target="_blank" class="view-btn">View File</a>
+                            <button class="view-btn" onclick="previewFile('${data.ipfsHash}')">Preview File</button>
                             ${isOwner ? `<button class="delete-btn" onclick="deleteData(${dataId})">Delete</button>` : ''}
                         </div>
-                    </div>
-                `;
+                </div>
+            `;
             } catch (error) {
                 console.error(`Error loading data ID ${dataId}:`, error);
                 continue;
@@ -1011,11 +1248,19 @@ async function loadUserData() {
         if (activeDataCount === 0) {
             userDataList.innerHTML = '<p class="empty-message">You have no active data or approved access</p>';
         } else {
-            userDataList.innerHTML = html;
+        userDataList.innerHTML = html;
+        }
+        
+        // Only hide indicators for manual refreshes
+        if (!autoRefresh) {
+            hideRefreshIndicator('user-data-list');
         }
     } catch (error) {
         console.error('Error loading user data:', error);
         userDataList.innerHTML = '<p class="empty-message">Error loading data. Please try again.</p>';
+        
+        // Always hide indicators on error
+        hideRefreshIndicator('user-data-list');
     }
 }
 
@@ -1029,9 +1274,40 @@ function copyToClipboard(text) {
 }
 
 // Load all data
-async function loadAllData() {
+async function loadAllData(autoRefresh = false) {
     try {
+        // Only show visual indicators for manual refreshes
+        if (!autoRefresh) {
+            showRefreshIndicator('all-data-list');
         allDataList.innerHTML = '<p class="loading">Loading available data...</p>';
+            // Track the refresh time
+            lastRefreshTime['browse'] = Date.now();
+        }
+        
+        // Get user's request IDs to check which data they've already requested
+        const userRequestIds = await contract.getUserRequests(currentAccount);
+        const requestedDataIds = new Set();
+        
+        // Find all data IDs that the user has already requested
+        for (const requestId of userRequestIds) {
+            try {
+                // Try to find the data ID associated with this request
+                for (let i = 1; i <= 10; i++) { // Assuming max data ID is 10
+                    try {
+                        const request = await contract.getAccessRequest(i, requestId);
+                        if (request.requester.toLowerCase() === currentAccount.toLowerCase()) {
+                            requestedDataIds.add(i);
+                            break;
+                        }
+                    } catch (error) {
+                        continue;
+                    }
+                }
+            } catch (error) {
+                console.error('Error processing request:', error);
+                continue;
+            }
+        }
         
         // In a real application, you would need a way to get all data IDs
         // For this example, we'll assume data IDs are sequential from 1 to 10
@@ -1043,8 +1319,10 @@ async function loadAllData() {
             try {
                 const data = await contract.getDataEntry(i);
                 
-                // Skip if data is not active or if it's the current user's data
-                if (!data.isActive || data.owner.toLowerCase() === currentAccount.toLowerCase()) {
+                // Skip if data is not active, if it's the current user's data, or if user already requested access
+                if (!data.isActive || 
+                    data.owner.toLowerCase() === currentAccount.toLowerCase() ||
+                    requestedDataIds.has(i)) {
                     continue;
                 }
                 
@@ -1073,17 +1351,32 @@ async function loadAllData() {
         } else {
             allDataList.innerHTML = html;
         }
+        
+        // Only hide indicators for manual refreshes
+        if (!autoRefresh) {
+            hideRefreshIndicator('all-data-list');
+        }
     } catch (error) {
         console.error('Error loading all data:', error);
         allDataList.innerHTML = '<p class="empty-message">Error loading data. Please try again.</p>';
+        
+        // Always hide indicators on error
+        hideRefreshIndicator('all-data-list');
     }
 }
 
 // Load requests
-async function loadRequests() {
+async function loadRequests(autoRefresh = false) {
     try {
+        // Only show visual indicators for manual refreshes
+        if (!autoRefresh) {
+            showRefreshIndicator('incoming-requests');
+            showRefreshIndicator('outgoing-requests');
         incomingRequests.innerHTML = '<p class="loading">Loading incoming requests...</p>';
         outgoingRequests.innerHTML = '<p class="loading">Loading outgoing requests...</p>';
+            // Track the refresh time
+            lastRefreshTime['requests'] = Date.now();
+        }
         
         // Get user's data
         const dataIds = await contract.getUserData(currentAccount);
@@ -1100,51 +1393,53 @@ async function loadRequests() {
                     continue; // Skip inactive data
                 }
                 
-                const requestIds = await contract.getDataRequests(dataId);
-                
-                for (const requestId of requestIds) {
+            const requestIds = await contract.getDataRequests(dataId);
+            
+            for (const requestId of requestIds) {
                     try {
-                        const request = await contract.getAccessRequest(dataId, requestId);
+                const request = await contract.getAccessRequest(dataId, requestId);
                         const data = await contract.getDataEntry(dataId);
+                
+                incomingCount++;
+                
+                let statusClass = 'pending';
+                let statusText = 'Pending';
+                let actions = `<button onclick="approveRequest(${dataId}, ${requestId})">Approve</button>`;
+                
+                if (request.isApproved) {
+                    statusClass = 'approved';
+                    statusText = 'Approved';
                     
-                        incomingCount++;
-                        
-                        let statusClass = 'pending';
-                        let statusText = 'Pending';
-                        let actions = `<button onclick="approveRequest(${dataId}, ${requestId})">Approve</button>`;
-                        
-                        if (request.isApproved) {
-                            statusClass = 'approved';
-                            statusText = 'Approved';
-                            
-                            if (!request.isRevoked && Date.now() / 1000 < request.endTime) {
-                                actions = `<button onclick="revokeRequest(${dataId}, ${requestId})">Revoke</button>`;
-                            } else if (request.isRevoked) {
-                                statusClass = 'revoked';
-                                statusText = 'Revoked';
-                                actions = '';
-                            } else {
-                                statusText = 'Expired';
+                    if (!request.isRevoked && Date.now() / 1000 < request.endTime) {
+                                actions = `
+                                    <button onclick="revokeRequest(${dataId}, ${requestId})">Revoke</button>
+                                `;
+                    } else if (request.isRevoked) {
+                        statusClass = 'revoked';
+                        statusText = 'Revoked';
+                        actions = '';
+                    } else {
+                        statusText = 'Expired';
                                 if (!request.isPaid) {
                                     actions = `<button onclick="claimPayment(${dataId}, ${requestId})">Claim Payment</button>`;
                                 } else {
-                                    actions = '';
+                        actions = '';
                                 }
-                            }
-                        }
-                        
-                        incomingHtml += `
-                            <div class="request-card">
+                    }
+                }
+                
+                incomingHtml += `
+                    <div class="request-card" data-data-id="${dataId}" data-request-id="${requestId}">
                                 <h4>Request for "${data.name}"</h4>
-                                <span class="status ${statusClass}">${statusText}</span>
-                                <p><strong>Requester:</strong> ${truncateString(request.requester, 10)}</p>
-                                <p><strong>Start Time:</strong> ${formatDate(request.startTime)}</p>
-                                <p><strong>End Time:</strong> ${formatDate(request.endTime)}</p>
-                                <div class="actions">
-                                    ${actions}
-                                </div>
-                            </div>
-                        `;
+                        <span class="status ${statusClass}">${statusText}</span>
+                        <p><strong>Requester:</strong> ${truncateString(request.requester, 10)}</p>
+                        <p><strong>Start Time:</strong> ${formatDate(request.startTime)}</p>
+                        <p><strong>End Time:</strong> ${formatDate(request.endTime)}</p>
+                        <div class="actions">
+                            ${actions}
+                        </div>
+                    </div>
+                `;
                     } catch (error) {
                         console.error('Error processing request:', error);
                         continue;
@@ -1199,29 +1494,29 @@ async function loadRequests() {
                     const request = await contract.getAccessRequest(foundDataId, requestId);
                     
                     outgoingCount++;
-                    let statusClass = 'pending';
-                    let statusText = 'Pending';
+                let statusClass = 'pending';
+                let statusText = 'Pending';
+                
+                if (request.isApproved) {
+                    statusClass = 'approved';
+                    statusText = 'Approved';
                     
-                    if (request.isApproved) {
-                        statusClass = 'approved';
-                        statusText = 'Approved';
-                        
-                        if (request.isRevoked) {
-                            statusClass = 'revoked';
-                            statusText = 'Revoked';
-                        } else if (Date.now() / 1000 > request.endTime) {
-                            statusText = 'Expired';
-                        }
+                    if (request.isRevoked) {
+                        statusClass = 'revoked';
+                        statusText = 'Revoked';
+                    } else if (Date.now() / 1000 > request.endTime) {
+                        statusText = 'Expired';
                     }
-                    
-                    outgoingHtml += `
-                        <div class="request-card">
+                }
+                
+                outgoingHtml += `
+                    <div class="request-card">
                             <h4>Request for "${data.name}"</h4>
-                            <span class="status ${statusClass}">${statusText}</span>
-                            <p><strong>Start Time:</strong> ${formatDate(request.startTime)}</p>
-                            <p><strong>End Time:</strong> ${formatDate(request.endTime)}</p>
-                        </div>
-                    `;
+                        <span class="status ${statusClass}">${statusText}</span>
+                        <p><strong>Start Time:</strong> ${formatDate(request.startTime)}</p>
+                        <p><strong>End Time:</strong> ${formatDate(request.endTime)}</p>
+                    </div>
+                `;
                 }
             } catch (error) {
                 console.error('Error processing outgoing request:', error);
@@ -1232,12 +1527,22 @@ async function loadRequests() {
         if (outgoingCount === 0) {
             outgoingRequests.innerHTML = '<p class="empty-message">No outgoing requests</p>';
         } else {
-            outgoingRequests.innerHTML = outgoingHtml;
+        outgoingRequests.innerHTML = outgoingHtml;
+        }
+        
+        // Only hide indicators for manual refreshes
+        if (!autoRefresh) {
+            hideRefreshIndicator('incoming-requests');
+            hideRefreshIndicator('outgoing-requests');
         }
     } catch (error) {
         console.error('Error loading requests:', error);
         incomingRequests.innerHTML = '<p class="empty-message">Error loading requests. Please try again.</p>';
         outgoingRequests.innerHTML = '<p class="empty-message">Error loading requests. Please try again.</p>';
+        
+        // Always hide indicators on error
+        hideRefreshIndicator('incoming-requests');
+        hideRefreshIndicator('outgoing-requests');
     }
 }
 
@@ -1384,7 +1689,7 @@ async function approveRequest(dataId, requestId) {
     }
 }
 
-// Revoke request
+// Revoke request - simplified robust approach
 async function revokeRequest(dataId, requestId) {
     try {
         // Get the request details first to check if it's still valid
@@ -1401,66 +1706,97 @@ async function revokeRequest(dataId, requestId) {
             return;
         }
         
-        // Get contract balance before revoking
-        const contractBalance = await provider.getBalance(contractAddress);
-        console.log('Contract balance:', ethers.utils.formatEther(contractBalance));
+        // Confirm revocation
+        if (!confirm('Are you sure you want to revoke this access?')) {
+            return;
+        }
         
-        // Get the data price and refund percentage
-        const dataPrice = await contract.DATA_PRICE();
-        const refundPercentage = await contract.REFUND_PERCENTAGE();
+        showNotification('Revoking access... Please wait', 'info');
         
-        // Calculate remaining time for refund
-        const remainingTime = request.endTime - Math.floor(Date.now() / 1000);
-        const totalDuration = request.endTime - request.startTime;
-        
-        // Calculate refund amount
-        const refundAmount = dataPrice.mul(remainingTime).mul(refundPercentage).div(totalDuration).div(100);
-        
-        console.log('Refund details:', {
-            dataPrice: ethers.utils.formatEther(dataPrice),
-            refundPercentage: refundPercentage.toString(),
-            remainingTime: remainingTime,
-            totalDuration: totalDuration,
-            refundAmount: ethers.utils.formatEther(refundAmount)
-        });
-        
-        // Inform the user about the revocation process
-        if (confirm('You are about to revoke access. Continue?')) {
-            showNotification('Revoking access... Please confirm the transaction in your wallet', 'info');
+        // STEP 1: Try to claim payment first (more reliable)
+        try {
+            showNotification('Step 1/2: Processing payment...', 'info');
             
+            // First claim the payment to mark it as paid
+            const claimData = contract.interface.encodeFunctionData('claimPayment', [dataId, requestId]);
+            
+            const claimTx = await signer.sendTransaction({
+                to: contractAddress,
+                data: claimData,
+                gasLimit: ethers.utils.hexlify(3000000), 
+                gasPrice: ethers.utils.parseUnits('10', 'gwei')
+            });
+            
+            await claimTx.wait();
+            showNotification('Payment processed successfully', 'success');
+            
+            // Check if this already marked it as revoked
+            const updatedRequest = await contract.getAccessRequest(dataId, requestId);
+            if (updatedRequest.isRevoked) {
+                showNotification('Access successfully revoked', 'success');
+                loadRequests();
+                return;
+            }
+        } catch (claimError) {
+            console.error('Error processing payment:', claimError);
+            showNotification('Payment processing step failed, continuing with revocation', 'warning');
+        }
+        
+        // STEP 2: Try direct revocation with zero value
+        try {
+            showNotification('Step 2/2: Finalizing revocation...', 'info');
+            
+            const revokeData = contract.interface.encodeFunctionData('revokeAccess', [dataId, requestId]);
+            
+            const revokeTx = await signer.sendTransaction({
+                to: contractAddress,
+                data: revokeData,
+                gasLimit: ethers.utils.hexlify(5000000),
+                gasPrice: ethers.utils.parseUnits('15', 'gwei'),
+                value: ethers.constants.Zero
+            });
+            
+            await revokeTx.wait();
+            showNotification('Access successfully revoked', 'success');
+            loadRequests();
+            return;
+        } catch (revokeError) {
+            console.error('Error finalizing revocation:', revokeError);
+            
+            // One final check to see if revocation succeeded despite the error
             try {
-                // Try with optimized gas settings
-                const tx = await contract.revokeAccess(dataId, requestId, {
-                    gasLimit: 1000000 // Much higher gas limit
-                });
-                
-                showNotification('Transaction submitted. Waiting for confirmation...', 'info');
-                
-                // Wait for transaction with timeout
-                const receipt = await tx.wait();
-                
-                if (receipt.status === 1) {
-                    showNotification('Access revoked successfully', 'success');
+                const finalCheck = await contract.getAccessRequest(dataId, requestId);
+                if (finalCheck.isRevoked || finalCheck.isPaid) {
+                    showNotification('Access appears to have been revoked successfully', 'success');
                     loadRequests();
-                } else {
-                    throw new Error('Transaction failed');
+                    return;
                 }
-            } catch (txError) {
-                console.error('Transaction error:', txError);
+            } catch (checkError) {
+                console.error('Error checking final status:', checkError);
+            }
+            
+            showNotification('Revocation encountered an error. The UI will be updated, but blockchain state may not reflect changes.', 'error');
+            
+            // Update UI as a fallback
+            const requestCard = document.querySelector(`.request-card[data-data-id="${dataId}"][data-request-id="${requestId}"]`);
+            if (requestCard) {
+                const statusEl = requestCard.querySelector('.status');
+                if (statusEl) {
+                    statusEl.className = 'status revoked';
+                    statusEl.textContent = 'Revoked (UI Only)';
+                }
                 
-                // Show a more helpful error message
-                showNotification('The revocation transaction failed. This could be due to contract limitations with the refund mechanism.', 'error');
-                
-                // Offer to contact support
-                if (confirm('Would you like to contact support for assistance with this issue?')) {
-                    // Here you would typically open a support form or provide contact information
-                    showNotification('Please contact support at support@dataroots.com for assistance', 'info');
+                const actionsDiv = requestCard.querySelector('.actions');
+                if (actionsDiv) {
+                    actionsDiv.innerHTML = '<p style="color: #e74c3c;">Revocation status may not be reflected on blockchain.</p>';
                 }
             }
+            
+            loadRequests();
         }
     } catch (error) {
-        console.error('Error revoking access:', error);
-        showNotification('Failed to prepare revocation. Please try again later.', 'error');
+        console.error('Revocation error:', error);
+        showNotification('Failed to revoke access. Please try again later.', 'error');
     }
 }
 
@@ -1494,6 +1830,13 @@ window.openRequestModal = openRequestModal;
 window.approveRequest = approveRequest;
 window.revokeRequest = revokeRequest; 
 window.copyToClipboard = copyToClipboard;
+window.deleteData = deleteData;
+window.claimPayment = claimPayment;
+window.processExpiredAccess = processExpiredAccess;
+window.loadUserData = loadUserData;
+window.loadAllData = loadAllData;
+window.loadRequests = loadRequests;
+window.previewFile = previewFile;
 
 // Delete data
 async function deleteData(dataId) {
@@ -1553,6 +1896,421 @@ async function processExpiredAccess(dataId, requestId) {
     }
 }
 
-window.deleteData = deleteData;
-window.claimPayment = claimPayment;
-window.processExpiredAccess = processExpiredAccess;
+// Create a custom provider for EDU Chain
+function createEduChainProvider() {
+    try {
+        const provider = new ethers.providers.JsonRpcProvider(EDU_CHAIN_RPC_URL);
+        console.log(`Connected to EDU Chain testnet: ${EDU_CHAIN_NAME} (ID: ${EDU_CHAIN_ID})`);
+        return provider;
+    } catch (error) {
+        console.error('Error creating EDU Chain provider:', error);
+        showNotification('Failed to connect to EDU Chain', 'error');
+        return null;
+    }
+}
+
+// Show refresh indicator
+function showRefreshIndicator(elementId) {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+    
+    // Add refresh indicator class
+    element.classList.add('refreshing');
+    
+    // Create or update the refresh badge
+    let badge = element.querySelector('.refresh-badge');
+    if (!badge) {
+        badge = document.createElement('div');
+        badge.className = 'refresh-badge';
+        badge.innerHTML = 'Refreshing...';
+        element.appendChild(badge);
+    }
+}
+
+// Hide refresh indicator
+function hideRefreshIndicator(elementId) {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+    
+    // Remove refreshing class
+    element.classList.remove('refreshing');
+    
+    // Remove badge if exists
+    const badge = element.querySelector('.refresh-badge');
+    if (badge) {
+        badge.remove();
+    }
+}
+
+// Preview file in a modal to prevent downloading
+async function previewFile(ipfsHash) {
+    try {
+        showNotification('Loading preview...', 'info');
+        
+        // Create or get the preview modal
+        let previewModal = document.getElementById('preview-modal');
+        if (!previewModal) {
+            previewModal = document.createElement('div');
+            previewModal.id = 'preview-modal';
+            previewModal.className = 'modal';
+            
+            const modalContent = document.createElement('div');
+            modalContent.className = 'modal-content preview-modal-content';
+            
+            const closeBtn = document.createElement('span');
+            closeBtn.className = 'close-modal';
+            closeBtn.innerHTML = '&times;';
+            closeBtn.onclick = () => {
+                previewModal.classList.add('hidden');
+                document.getElementById('preview-frame').src = 'about:blank';
+            };
+            
+            const header = document.createElement('div');
+            header.className = 'modal-header';
+            header.appendChild(closeBtn);
+            
+            const previewContainer = document.createElement('div');
+            previewContainer.className = 'preview-container';
+            previewContainer.innerHTML = `
+                <div class="preview-controls">
+                    <button id="zoom-in" class="zoom-btn" title="Zoom In">+</button>
+                    <button id="zoom-out" class="zoom-btn" title="Zoom Out">-</button>
+                    <button id="zoom-reset" class="zoom-btn" title="Reset Zoom">Reset</button>
+                </div>
+                <div class="anti-screenshot-overlay">PREVIEW ONLY - SECURE VIEW</div>
+                <iframe id="preview-frame" sandbox="allow-scripts" style="width:100%;height:100%;border:none;"></iframe>
+                <div id="preview-loader" class="preview-loader">Loading preview...</div>
+                <div id="preview-error" class="preview-error hidden">Unable to preview this file type</div>
+            `;
+            
+            modalContent.appendChild(header);
+            modalContent.appendChild(previewContainer);
+            previewModal.appendChild(modalContent);
+            document.body.appendChild(previewModal);
+            
+            // Close modal when clicking outside content
+            previewModal.addEventListener('click', (e) => {
+                if (e.target === previewModal) {
+                    previewModal.classList.add('hidden');
+                    document.getElementById('preview-frame').src = 'about:blank';
+                }
+            });
+
+            // Set up zoom functionality
+            const zoomIn = document.getElementById('zoom-in');
+            const zoomOut = document.getElementById('zoom-out');
+            const zoomReset = document.getElementById('zoom-reset');
+            
+            if (zoomIn && zoomOut && zoomReset) {
+                zoomIn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    applyZoom('in');
+                });
+                
+                zoomOut.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    applyZoom('out');
+                });
+                
+                zoomReset.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    applyZoom('reset');
+                });
+            }
+            
+            // Setup screenshot detection
+            setupScreenshotDetection();
+        }
+        
+        // Show the modal
+        previewModal.classList.remove('hidden');
+        
+        // Get elements
+        const previewFrame = document.getElementById('preview-frame');
+        const previewLoader = document.getElementById('preview-loader');
+        const previewError = document.getElementById('preview-error');
+        
+        // Reset state
+        previewLoader.classList.remove('hidden');
+        previewError.classList.add('hidden');
+        previewFrame.classList.add('hidden');
+        
+        // Reset zoom level and drag state
+        previewFrame.style.transform = 'scale(1)';
+        previewFrame.dataset.zoomLevel = '1';
+        previewFrame.dataset.dragX = '0';
+        previewFrame.dataset.dragY = '0';
+        
+        // First try to load as an image or pdf
+        const ipfsUrl = `https://ipfs.io/ipfs/${ipfsHash}`;
+        
+        try {
+            // First try to get the content type
+            const response = await fetch(ipfsUrl, { method: 'HEAD' });
+            const contentType = response.headers.get('content-type');
+            
+            if (contentType && contentType.startsWith('image/')) {
+                // For images, use direct embedding with a simple content frame
+                previewFrame.onload = () => {
+                    previewLoader.classList.add('hidden');
+                    previewFrame.classList.remove('hidden');
+                };
+                
+                // Simple HTML with no CSP restrictions
+                const frameContent = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <style>
+                            body, html { margin: 0; padding: 0; height: 100%; display: flex; justify-content: center; align-items: center; background: #f5f5f5; overflow: hidden; }
+                            img { max-width: 100%; max-height: 100%; object-fit: contain; }
+                            .watermark { position: absolute; top: 10px; right: 10px; font-family: Arial; font-size: 16px; color: rgba(0,0,0,0.3); pointer-events: none; }
+                        </style>
+                    </head>
+                    <body>
+                        <img src="${ipfsUrl}" />
+                        <div class="watermark">PREVIEW ONLY</div>
+                    </body>
+                    </html>
+                `;
+                
+                const blob = new Blob([frameContent], { type: 'text/html' });
+                const blobUrl = URL.createObjectURL(blob);
+                previewFrame.src = blobUrl;
+                
+            } else if (contentType && contentType === 'application/pdf') {
+                // For PDFs, use the PDF viewer with limitations
+                const viewerUrl = `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(ipfsUrl)}#pagemode=thumbs&toolbar=0&navpanes=0&statusbar=0&messages=0&scrollbar=1`;
+                previewFrame.onload = () => {
+                    previewLoader.classList.add('hidden');
+                    previewFrame.classList.remove('hidden');
+                };
+                previewFrame.src = viewerUrl;
+                
+            } else if (contentType && (contentType.startsWith('text/') || contentType === 'application/json')) {
+                // For text files, display with syntax highlighting
+                const textResponse = await fetch(ipfsUrl);
+                const text = await textResponse.text();
+                
+                const escapedText = text
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#039;');
+                
+                const frameContent = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <style>
+                            body, html { margin: 0; padding: 20px; height: 100%; background: #f5f5f5; font-family: monospace; overflow: auto; user-select: none; }
+                            .zoom-container { position: relative; transition: transform 0.2s ease; }
+                            pre { white-space: pre-wrap; word-break: break-word; }
+                            .watermark { position: fixed; top: 10px; right: 10px; font-family: Arial; font-size: 16px; color: rgba(0,0,0,0.3); pointer-events: none; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="zoom-container">
+                            <pre>${escapedText}</pre>
+                            <div class="watermark">PREVIEW ONLY</div>
+                        </div>
+                    </body>
+                    </html>
+                `;
+                
+                const blob = new Blob([frameContent], { type: 'text/html' });
+                const blobUrl = URL.createObjectURL(blob);
+                
+                previewFrame.onload = () => {
+                    previewLoader.classList.add('hidden');
+                    previewFrame.classList.remove('hidden');
+                };
+                previewFrame.src = blobUrl;
+                
+            } else {
+                // For other file types, show the error message
+                previewLoader.classList.add('hidden');
+                previewError.classList.remove('hidden');
+                previewError.textContent = `Unable to preview this file type (${contentType || 'unknown'})`;
+            }
+        } catch (error) {
+            console.error('Error loading preview:', error);
+            previewLoader.classList.add('hidden');
+            previewError.classList.remove('hidden');
+            previewError.textContent = 'Error loading preview: ' + error.message;
+        }
+        
+    } catch (error) {
+        console.error('Error setting up preview:', error);
+        showNotification('Failed to preview file: ' + error.message, 'error');
+    }
+}
+
+// Handle zooming in the preview
+function applyZoom(direction) {
+    const frame = document.getElementById('preview-frame');
+    if (!frame) return;
+    
+    // Get current zoom level (default to 1 if not set)
+    let zoomLevel = parseFloat(frame.dataset.zoomLevel || '1');
+    const oldZoomLevel = zoomLevel;
+    
+    // Apply zoom based on direction
+    switch (direction) {
+        case 'in':
+            zoomLevel = Math.min(zoomLevel + 0.25, 3); // Maximum zoom: 3x
+            break;
+        case 'out':
+            zoomLevel = Math.max(zoomLevel - 0.25, 0.5); // Minimum zoom: 0.5x
+            break;
+        case 'reset':
+            zoomLevel = 1; // Reset to default
+            // Also reset position when resetting zoom
+            frame.dataset.dragX = '0';
+            frame.dataset.dragY = '0';
+            break;
+    }
+    
+    // Reset position if zooming out to 1 or below
+    if (zoomLevel <= 1) {
+        frame.dataset.dragX = '0';
+        frame.dataset.dragY = '0';
+    }
+    
+    // Update zoom level
+    const dragX = parseInt(frame.dataset.dragX || '0');
+    const dragY = parseInt(frame.dataset.dragY || '0');
+    
+    frame.style.transform = `scale(${zoomLevel}) translate(${dragX}px, ${dragY}px)`;
+    frame.dataset.zoomLevel = zoomLevel.toString();
+    
+    // If zoomed in and we weren't previously zoomed in, set up dragging
+    if (zoomLevel > 1 && oldZoomLevel <= 1) {
+        setupDragging(frame);
+    }
+}
+
+// Setup dragging functionality for the preview frame
+function setupDragging(frame) {
+    if (!frame) return;
+    
+    const container = frame.closest('.preview-container');
+    if (!container) return;
+    
+    let isDragging = false;
+    let startX, startY;
+    let initialTransform;
+    
+    // Make sure cursor shows we can grab
+    container.style.cursor = 'grab';
+    
+    // Add event listeners
+    container.addEventListener('mousedown', startDrag);
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('mouseup', endDrag);
+    
+    // Touch events
+    container.addEventListener('touchstart', startTouch, { passive: false });
+    document.addEventListener('touchmove', dragTouch, { passive: false });
+    document.addEventListener('touchend', endTouch);
+    
+    function startDrag(e) {
+        e.preventDefault();
+        const zoomLevel = parseFloat(frame.dataset.zoomLevel || '1');
+        if (zoomLevel <= 1) return;
+        
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        initialTransform = frame.style.transform;
+        container.style.cursor = 'grabbing';
+    }
+    
+    function drag(e) {
+        if (!isDragging) return;
+        
+        const zoomLevel = parseFloat(frame.dataset.zoomLevel || '1');
+        const dx = (e.clientX - startX);
+        const dy = (e.clientY - startY);
+        
+        // Calculate new position
+        const dragX = parseInt(frame.dataset.dragX || '0') + dx / zoomLevel;
+        const dragY = parseInt(frame.dataset.dragY || '0') + dy / zoomLevel;
+        
+        // Apply limits
+        const maxDrag = 200;
+        const limitedX = Math.max(-maxDrag, Math.min(maxDrag, dragX));
+        const limitedY = Math.max(-maxDrag, Math.min(maxDrag, dragY));
+        
+        // Update transform
+        frame.style.transform = `scale(${zoomLevel}) translate(${limitedX}px, ${limitedY}px)`;
+        
+        // Save position for next drag
+        frame.dataset.dragX = limitedX.toString();
+        frame.dataset.dragY = limitedY.toString();
+        
+        // Update start position for next move
+        startX = e.clientX;
+        startY = e.clientY;
+    }
+    
+    function endDrag() {
+        if (isDragging) {
+            isDragging = false;
+            container.style.cursor = 'grab';
+        }
+    }
+    
+    function startTouch(e) {
+        if (e.touches.length !== 1) return;
+        
+        const zoomLevel = parseFloat(frame.dataset.zoomLevel || '1');
+        if (zoomLevel <= 1) return;
+        
+        e.preventDefault();
+        isDragging = true;
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        initialTransform = frame.style.transform;
+    }
+    
+    function dragTouch(e) {
+        if (!isDragging || e.touches.length !== 1) return;
+        
+        e.preventDefault();
+        const zoomLevel = parseFloat(frame.dataset.zoomLevel || '1');
+        const dx = (e.touches[0].clientX - startX);
+        const dy = (e.touches[0].clientY - startY);
+        
+        // Calculate new position
+        const dragX = parseInt(frame.dataset.dragX || '0') + dx / zoomLevel;
+        const dragY = parseInt(frame.dataset.dragY || '0') + dy / zoomLevel;
+        
+        // Apply limits
+        const maxDrag = 200;
+        const limitedX = Math.max(-maxDrag, Math.min(maxDrag, dragX));
+        const limitedY = Math.max(-maxDrag, Math.min(maxDrag, dragY));
+        
+        // Update transform
+        frame.style.transform = `scale(${zoomLevel}) translate(${limitedX}px, ${limitedY}px)`;
+        
+        // Save position for next drag
+        frame.dataset.dragX = limitedX.toString();
+        frame.dataset.dragY = limitedY.toString();
+        
+        // Update start position for next move
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+    }
+    
+    function endTouch() {
+        isDragging = false;
+    }
+}
+
+// Completely remove the screenshot detection
+function setupScreenshotDetection() {
+    // Screenshot detection disabled
+    console.log('Screenshot detection has been disabled');
+}
