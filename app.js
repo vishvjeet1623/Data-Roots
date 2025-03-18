@@ -12,7 +12,8 @@ const EDU_CHAIN_DECIMALS = 18;
 const EDU_CHAIN_BLOCK_EXPLORER = 'https://explorer.open-campus-codex.gelato.digital';
 
 // Contract ABI - This would be generated when compiling the contract
-const contractABI = [
+const contractABI = 
+		[
 	{
 		"inputs": [],
 		"stateMutability": "nonpayable",
@@ -122,42 +123,6 @@ const contractABI = [
 		"type": "event"
 	},
 	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "_dataId",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "_requestId",
-				"type": "uint256"
-			}
-		],
-		"name": "approveAccess",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "_dataId",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "_requestId",
-				"type": "uint256"
-			}
-		],
-		"name": "claimPayment",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
 		"anonymous": false,
 		"inputs": [
 			{
@@ -212,19 +177,6 @@ const contractABI = [
         ],
 		"name": "DataUploaded",
 		"type": "event"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "_dataId",
-				"type": "uint256"
-			}
-		],
-		"name": "deactivateData",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
     },
 	{
 		"anonymous": false,
@@ -275,24 +227,6 @@ const contractABI = [
 		],
 		"name": "PaymentClaimed",
 		"type": "event"
-	},
-	{
-        "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "_dataId",
-                "type": "uint256"
-            },
-            {
-                "internalType": "uint256",
-				"name": "_requestId",
-                "type": "uint256"
-            }
-        ],
-		"name": "processExpiredAccess",
-        "outputs": [],
-		"stateMutability": "nonpayable",
-        "type": "function"
     },
     {
 		"anonymous": false,
@@ -327,86 +261,29 @@ const contractABI = [
 	},
 	{
 		"inputs": [],
-		"name": "renounceOwnership",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-	{
-		"inputs": [
+                "name": "DATA_PRICE",
+                "outputs": [
 			{
 				"internalType": "uint256",
-				"name": "_dataId",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "_duration",
+                        "name": "",
 				"type": "uint256"
 			}
 		],
-		"name": "requestAccess",
-		"outputs": [],
-		"stateMutability": "payable",
+                "stateMutability": "view",
 		"type": "function"
 	},
     {
-        "inputs": [
+                "inputs": [],
+                "name": "REFUND_PERCENTAGE",
+                "outputs": [
             {
                 "internalType": "uint256",
-                "name": "_dataId",
-                "type": "uint256"
-            },
-            {
-                "internalType": "uint256",
-                "name": "_requestId",
+                        "name": "",
                 "type": "uint256"
             }
         ],
-        "name": "revokeAccess",
-        "outputs": [],
-        "stateMutability": "nonpayable",
+                "stateMutability": "view",
         "type": "function"
-    },
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "newOwner",
-				"type": "address"
-			}
-		],
-		"name": "transferOwnership",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "_ipfsHash",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_name",
-				"type": "string"
-			},
-			{
-				"internalType": "enum DataRoots.DataCategory",
-				"name": "_category",
-				"type": "uint8"
-			}
-		],
-		"name": "uploadData",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"stateMutability": "payable",
-		"type": "receive"
 	},
     {
         "inputs": [
@@ -458,16 +335,39 @@ const contractABI = [
 		"type": "function"
 	},
 	{
-		"inputs": [],
-		"name": "DATA_PRICE",
-		"outputs": [
+                "inputs": [
 			{
 				"internalType": "uint256",
-				"name": "",
+                        "name": "_dataId",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "_requestId",
 				"type": "uint256"
 			}
 		],
-		"stateMutability": "view",
+                "name": "approveAccess",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    {
+                        "internalType": "uint256",
+                        "name": "_dataId",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "_requestId",
+                        "type": "uint256"
+                    }
+                ],
+                "name": "claimPayment",
+                "outputs": [],
+                "stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
@@ -538,6 +438,19 @@ const contractABI = [
         "stateMutability": "view",
         "type": "function"
     },
+            {
+                "inputs": [
+                    {
+                        "internalType": "uint256",
+                        "name": "_dataId",
+                        "type": "uint256"
+                    }
+                ],
+                "name": "deactivateData",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
     {
         "inputs": [
             {
@@ -715,17 +628,101 @@ const contractABI = [
 		"stateMutability": "view",
 		"type": "function"
 	},
+            {
+                "inputs": [
+                    {
+                        "internalType": "uint256",
+                        "name": "_dataId",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "_requestId",
+                        "type": "uint256"
+                    }
+                ],
+                "name": "processExpiredAccess",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
 	{
 		"inputs": [],
-		"name": "REFUND_PERCENTAGE",
-		"outputs": [
+                "name": "renounceOwnership",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [
 			{
 				"internalType": "uint256",
-				"name": "",
+                        "name": "_dataId",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "_duration",
 				"type": "uint256"
 			}
 		],
-		"stateMutability": "view",
+                "name": "requestAccess",
+                "outputs": [],
+                "stateMutability": "payable",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    {
+                        "internalType": "uint256",
+                        "name": "_dataId",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "_requestId",
+                        "type": "uint256"
+                    }
+                ],
+                "name": "revokeAccess",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    {
+                        "internalType": "address",
+                        "name": "newOwner",
+                        "type": "address"
+                    }
+                ],
+                "name": "transferOwnership",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    {
+                        "internalType": "string",
+                        "name": "_ipfsHash",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "_name",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "enum DataRoots.DataCategory",
+                        "name": "_category",
+                        "type": "uint8"
+                    }
+                ],
+                "name": "uploadData",
+                "outputs": [],
+                "stateMutability": "nonpayable",
 		"type": "function"
 	},
     {
@@ -775,8 +772,13 @@ const contractABI = [
         ],
         "stateMutability": "view",
         "type": "function"
+            },
+            {
+                "stateMutability": "payable",
+                "type": "receive"
     }
-];
+]
+        ;
 
 
 
@@ -886,7 +888,7 @@ function setupEventListeners() {
             }
             
             refreshBrowseBtn.classList.add('loading');
-            await loadAllData();
+            await loadAllData(true); // true = auto refresh
             refreshBrowseBtn.classList.remove('loading');
         });
     }
@@ -899,7 +901,7 @@ function setupEventListeners() {
             }
             
             refreshRequestsBtn.classList.add('loading');
-            await loadRequests();
+            await loadRequests(true); // true = auto refresh
             refreshRequestsBtn.classList.remove('loading');
         });
     }
@@ -1144,9 +1146,23 @@ async function loadUserData(autoRefresh = false) {
         // Check each request to find approved ones
         for (const requestId of userRequestIds) {
             try {
-                const request = await contract.getAccessRequest(requestId, requestId);
-                if (request.isApproved && !request.isRevoked && Date.now() / 1000 < request.endTime) {
-                    approvedDataIds.add(requestId);
+                // We need to check all possible data IDs with this requestId
+                // Since we don't know which data the request is for, we need to try all possible data IDs
+                // up to a reasonable limit
+                for (let dataId = 1; dataId <= 20; dataId++) {  // Use the same maxDataId as in loadAllData
+                    try {
+                        const request = await contract.getAccessRequest(dataId, requestId);
+                        // Only add if it belongs to the current user
+                        if (request.requester.toLowerCase() === currentAccount.toLowerCase() &&
+                            request.isApproved && !request.isRevoked && 
+                            Date.now() / 1000 < request.endTime) {
+                            approvedDataIds.add(dataId);
+                            break; // Found the matching data ID, no need to check others for this request
+                        }
+                    } catch (error) {
+                        // This data ID doesn't have this request, continue checking others
+                        continue;
+                    }
                 }
             } catch (error) {
                 continue;
@@ -1241,11 +1257,14 @@ async function loadAllData(autoRefresh = false) {
         const userRequestIds = await contract.getUserRequests(currentAccount);
         const requestedDataIds = new Set();
         
+        // Define maxDataId consistently for the entire function
+        const maxDataId = 20; // This would be dynamic in a real app
+        
         // Find all data IDs that the user has already requested
         for (const requestId of userRequestIds) {
             try {
                 // Try to find the data ID associated with this request
-                for (let i = 1; i <= 10; i++) { // Assuming max data ID is 10
+                for (let i = 1; i <= maxDataId; i++) {
                     try {
                         const request = await contract.getAccessRequest(i, requestId);
                         if (request.requester.toLowerCase() === currentAccount.toLowerCase()) {
@@ -1263,10 +1282,11 @@ async function loadAllData(autoRefresh = false) {
         }
         
         // In a real application, you would need a way to get all data IDs
-        // For this example, we'll assume data IDs are sequential from 1 to 10
-        const maxDataId = 10; // This would be dynamic in a real app
+        // For this example, we'll assume data IDs are sequential from 1 to maxDataId
         let html = '';
         let dataCount = 0;
+        
+        console.log('User requested data IDs:', Array.from(requestedDataIds));
         
         for (let i = 1; i <= maxDataId; i++) {
             try {
@@ -1330,6 +1350,9 @@ async function loadRequests(autoRefresh = false) {
             // Track the refresh time
             lastRefreshTime['requests'] = Date.now();
         }
+        
+        // Define maxDataId consistently 
+        const maxDataId = 20; // This would be dynamic in a real app
         
         // Get user's data
         const dataIds = await contract.getUserData(currentAccount);
@@ -1424,7 +1447,7 @@ async function loadRequests(autoRefresh = false) {
             try {
                 // Try to find the data ID associated with this request
                 let foundDataId = null;
-                for (let i = 1; i <= 10; i++) { // Assuming max data ID is 10
+                for (let i = 1; i <= maxDataId; i++) { // Use consistent maxDataId value
                     try {
                         const request = await contract.getAccessRequest(i, requestId);
                         if (request.requester.toLowerCase() === currentAccount.toLowerCase()) {
@@ -1609,8 +1632,9 @@ async function handleRequestAccess(e) {
         // Close modal
         modal.classList.add('hidden');
         
-        // Reload requests
-        loadRequests();
+        // Reload requests and all data to update both tabs
+        await loadRequests();
+        await loadAllData();
     } catch (error) {
         console.error('Error requesting access:', error);
         showNotification('Failed to request access', 'error');
@@ -1634,8 +1658,10 @@ async function approveRequest(dataId, requestId) {
         
         showNotification('Request approved successfully', 'success');
         
-        // Reload requests
-        loadRequests();
+        // Reload all data views to ensure consistency
+        await loadRequests();
+        await loadUserData();
+        await loadAllData();
     } catch (error) {
         console.error('Error approving request:', error);
         showNotification('Failed to approve request', 'error');
@@ -1646,7 +1672,7 @@ async function approveRequest(dataId, requestId) {
 async function revokeRequest(dataId, requestId) {
     try {
         // Get the request details first to check if it's still valid
-        const request = await contract.getAccessRequest(dataId, requestId);
+        const request = await contract.revokeAccess(dataId, requestId);
         
         // Check if the request is already revoked or expired
         if (request.isRevoked) {
@@ -1759,7 +1785,7 @@ function showNotification(message, type = 'info') {
     const notificationText = document.getElementById('notification-text');
     
     // Set message content
-    notificationText.textContent = message;
+        notificationText.textContent = message;
     
     // Remove any existing classes and add the new type
     notification.className = 'notification';
@@ -1973,7 +1999,7 @@ async function previewFile(ipfsHash) {
                     document.getElementById('preview-frame').src = 'about:blank';
                 }
             });
-            
+
             // Setup zoom controls
             document.getElementById('zoom-in').addEventListener('click', () => {
                 const frame = document.getElementById('preview-frame');
