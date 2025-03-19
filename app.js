@@ -784,7 +784,7 @@ const contractABI =
 
 
 // Contract address - This would be the deployed contract address
-const contractAddress = "0x517b61b41D4B19D8A5c05a0A5AFEE121ba2e6669"; // Replace with actual address
+const contractAddress = "0xbD5dccA280439D5D36e8bDfce5d58fC45286ca17"; // Replace with actual address
 
 // Global variables
 let provider;
